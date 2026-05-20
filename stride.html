@@ -1,0 +1,2499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>STRIDE</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@400;700;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #f9f9f7;
+  --bg2: #f2f2ef;
+  --ink: #0d0d0d;
+  --ink2: #3a3a3a;
+  --ink3: #8a8a8a;
+  --ink4: #c4c4c4;
+  --white: #ffffff;
+  --accent: #0d0d0d;
+  --red: #e8321a;
+  --green: #1a7a4a;
+  --gold: #c9922a;
+  --border: rgba(0,0,0,0.07);
+  --border2: rgba(0,0,0,0.12);
+  --shadow: 0 2px 20px rgba(0,0,0,0.06);
+  --shadow-md: 0 8px 40px rgba(0,0,0,0.10);
+  --r: 20px;
+  --r-sm: 14px;
+}
+
+html, body { height: 100%; overflow: hidden; background: var(--bg); }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  color: var(--ink);
+  max-width: 430px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ─── SPLASH ─── */
+#splash {
+  position: fixed; inset: 0; z-index: 1000;
+  background: var(--ink);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 0;
+}
+
+.splash-wordmark {
+  font-family: 'DM Serif Display', serif;
+  font-weight: 900;
+  font-size: 58px;
+  color: var(--white);
+  letter-spacing: -2px;
+  line-height: 1;
+  animation: splashIn 0.8s cubic-bezier(0.16,1,0.3,1) 0.2s both;
+}
+
+.splash-tagline {
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  font-weight: 400;
+  margin-top: 8px;
+  animation: splashIn 0.8s cubic-bezier(0.16,1,0.3,1) 0.4s both;
+}
+
+.splash-line {
+  width: 1px; height: 0;
+  background: rgba(255,255,255,0.2);
+  margin: 30px 0 30px;
+  animation: lineGrow 0.6s ease 0.6s forwards;
+}
+@keyframes lineGrow { to { height: 60px; } }
+
+.splash-loader {
+  width: 40px; height: 2px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  animation: splashIn 0s 0.7s both;
+}
+.splash-loader-fill {
+  height: 100%; width: 0;
+  background: var(--white);
+  border-radius: 2px;
+  animation: loaderFill 1.2s ease 0.7s forwards;
+}
+@keyframes loaderFill { to { width: 100%; } }
+
+@keyframes splashIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#splash.out {
+  animation: splashOut 0.6s cubic-bezier(0.4,0,1,1) forwards;
+}
+@keyframes splashOut {
+  to { opacity: 0; transform: scale(1.04); pointer-events: none; }
+}
+
+/* ─── APP SHELL ─── */
+.shell { display: flex; flex-direction: column; height: 100vh; opacity: 0; transition: opacity 0.4s; }
+.shell.ready { opacity: 1; }
+
+/* ─── HEADER ─── */
+.header {
+  flex-shrink: 0;
+  padding: 12px 20px 8px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(249,249,247,0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  z-index: 50;
+}
+
+.wordmark {
+  font-family: 'DM Serif Display', serif;
+  font-weight: 900;
+  font-size: 26px;
+  letter-spacing: -1px;
+  color: var(--ink);
+}
+
+.header-right { display: flex; gap: 8px; align-items: center; }
+
+.hbtn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--white);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: all 0.2s; position: relative;
+}
+.hbtn:hover { border-color: var(--border2); }
+.hbtn .dot {
+  position: absolute; top: -2px; right: -2px;
+  width: 8px; height: 8px;
+  background: var(--red); border-radius: 50%;
+  border: 1.5px solid var(--bg);
+}
+
+/* ─── PANELS ─── */
+.panels { flex: 1; overflow: hidden; position: relative; }
+.panel {
+  position: absolute; inset: 0;
+  overflow-y: auto; overflow-x: hidden;
+  display: none; scrollbar-width: none;
+  background: var(--bg);
+}
+.panel::-webkit-scrollbar { display: none; }
+.panel.active { display: block; animation: panelIn 0.35s cubic-bezier(0.16,1,0.3,1); }
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── HOME PANEL ─── */
+
+/* Greeting bar */
+.greeting-bar {
+  padding: 16px 20px 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.greeting-text .sup { font-size: 11px; color: var(--ink3); letter-spacing: 1px; text-transform: uppercase; font-weight: 500; }
+.greeting-text .name {
+  font-family: 'DM Serif Display', serif;
+  font-weight: 700; font-size: 28px;
+  letter-spacing: -0.5px; line-height: 1.1;
+}
+
+.streak-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--ink); color: var(--white);
+  padding: 8px 13px; border-radius: 30px;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.streak-num { font-family: 'DM Serif Display', serif; font-weight: 900; font-size: 20px; color: #ffffff; }
+
+/* Level card */
+.level-card {
+  margin: 14px 16px;
+  background: var(--ink);
+  border-radius: 24px;
+  padding: 22px;
+  color: var(--white);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.lc-noise {
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.5; pointer-events: none;
+}
+
+.lc-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+
+.lc-level {
+  font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+  color: rgba(255,255,255,0.65); font-weight: 600; margin-bottom: 4px;
+}
+.lc-class {
+  font-family: 'DM Serif Display', serif;
+  font-weight: 900; font-size: 26px; line-height: 1.1;
+  color: #ffffff;
+}
+.lc-loc { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 4px; font-weight: 400; }
+
+.lc-num {
+  font-family: 'DM Serif Display', serif;
+  font-weight: 900; font-size: 56px;
+  line-height: 1; color: rgba(255,255,255,0.18);
+  letter-spacing: -3px;
+}
+
+.lc-xp-label {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: rgba(255,255,255,0.6);
+  margin-bottom: 8px; font-family: 'JetBrains Mono', monospace;
+}
+.lc-xp-label span { color: rgba(255,255,255,0.9); font-weight: 600; }
+
+.lc-track {
+  height: 4px; background: rgba(255,255,255,0.15); border-radius: 2px; overflow: hidden;
+}
+.lc-fill {
+  height: 100%; width: 0;
+  background: var(--white); border-radius: 2px;
+  animation: lcFill 1.4s cubic-bezier(0.4,0,0.2,1) 1.8s forwards;
+}
+@keyframes lcFill { to { width: 68%; } }
+
+.lc-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 0; margin-top: 18px; padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+.lc-stat { text-align: center; }
+.lc-stat + .lc-stat { border-left: 1px solid rgba(255,255,255,0.12); }
+.lc-stat-v {
+  font-family: 'DM Serif Display', serif;
+  font-weight: 900; font-size: 24px; line-height: 1;
+  color: #ffffff;
+}
+.lc-stat-l { font-size: 10px; color: rgba(255,255,255,0.55); margin-top: 4px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; }
+
+/* Weekly chart */
+.chart-section {
+  margin: 0 16px 16px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+.cs-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+.cs-title { font-size: 13px; font-weight: 600; letter-spacing: 0.2px; }
+.cs-sub { font-size: 11px; color: var(--ink3); margin-top: 1px; }
+.cs-total { text-align: right; }
+.cs-total-num {
+  font-family: 'DM Serif Display', serif;
+  font-weight: 700; font-size: 24px; letter-spacing: -0.5px; line-height: 1;
+}
+.cs-total-unit { font-size: 11px; color: var(--ink3); }
+
+/* Bar chart */
+.bar-chart {
+  display: flex; align-items: flex-end; gap: 8px; height: 80px; margin-bottom: 8px;
+}
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; height: 100%; justify-content: flex-end; }
+.bar-fill {
+  width: 100%; border-radius: 5px 5px 0 0;
+  background: var(--ink4);
+  transition: background 0.2s;
+  position: relative;
+  min-height: 4px;
+}
+.bar-fill.today { background: var(--ink); }
+.bar-fill.best { background: var(--ink2); }
+.bar-km { font-size: 9px; color: var(--ink3); font-family: 'JetBrains Mono', monospace; }
+.bar-day { font-size: 10px; color: var(--ink3); font-weight: 500; }
+.bar-col.today .bar-day { color: var(--ink); font-weight: 600; }
+
+/* Strava banner */
+.strava-banner {
+  margin: 0 16px 16px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.strava-banner:hover { border-color: var(--border2); }
+.strava-orb {
+  width: 42px; height: 42px; border-radius: 13px;
+  background: #fc4c02;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.strava-info { flex: 1; }
+.strava-name { font-weight: 600; font-size: 13px; }
+.strava-sub { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+.strava-sync {
+  font-size: 11px; font-weight: 600;
+  color: #fc4c02; cursor: pointer;
+  padding: 6px 12px; border-radius: 20px;
+  border: 1px solid rgba(252,76,2,0.25);
+  background: rgba(252,76,2,0.05);
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.2s;
+}
+.strava-sync:hover { background: rgba(252,76,2,0.1); }
+
+/* Recent run card */
+.run-cards { margin: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+
+.run-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+.run-card:hover { border-color: var(--border2); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.run-card:active { transform: translateY(0); }
+
+.rc-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+.rc-name { font-weight: 700; font-size: 15px; letter-spacing: -0.2px; }
+.rc-date { font-size: 11px; color: var(--ink3); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+
+.rc-chip {
+  font-size: 10px; padding: 4px 10px; border-radius: 20px; font-weight: 600; letter-spacing: 0.3px; white-space: nowrap;
+}
+.chip-pb { background: rgba(201,146,42,0.1); color: var(--gold); border: 1px solid rgba(201,146,42,0.2); }
+.chip-strava { background: rgba(252,76,2,0.08); color: #fc4c02; border: 1px solid rgba(252,76,2,0.15); }
+.chip-trail { background: rgba(26,122,74,0.08); color: var(--green); border: 1px solid rgba(26,122,74,0.15); }
+
+.rc-metrics { display: grid; grid-template-columns: repeat(4, 1fr); }
+.rc-m { text-align: center; padding: 0 4px; }
+.rc-m + .rc-m { border-left: 1px solid var(--border); }
+.rc-val { font-family: 'DM Serif Display', serif; font-weight: 700; font-size: 20px; line-height: 1; letter-spacing: -0.3px; }
+.rc-unit { font-size: 9px; color: var(--ink3); margin-top: 2px; letter-spacing: 1px; text-transform: uppercase; }
+
+.rc-xp {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 14px; padding-top: 13px;
+  border-top: 1px solid var(--border);
+}
+.xp-pip { width: 5px; height: 5px; border-radius: 50%; background: var(--ink); flex-shrink: 0; }
+.xp-label { font-size: 11px; color: var(--ink3); font-family: 'JetBrains Mono', monospace; }
+.xp-label strong { color: var(--ink); }
+
+/* ─── RUNS PANEL ─── */
+.panel-pad { padding: 14px 16px 100px; }
+
+.log-btn {
+  width: 100%; padding: 16px;
+  border-radius: var(--r);
+  background: var(--ink); color: var(--white);
+  border: none; cursor: pointer;
+  font-family: 'DM Serif Display', serif;
+  font-weight: 700; font-size: 18px;
+  letter-spacing: -0.3px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-bottom: 14px;
+  transition: opacity 0.2s; box-shadow: var(--shadow-md);
+}
+.log-btn:hover { opacity: 0.88; }
+
+/* ─── LEADERBOARD ─── */
+.lb-pills { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; scrollbar-width: none; }
+.lb-pills::-webkit-scrollbar { display: none; }
+.lb-pill {
+  flex-shrink: 0; padding: 7px 16px; border-radius: 20px;
+  background: var(--white); border: 1px solid var(--border);
+  font-size: 12px; font-weight: 500; color: var(--ink3);
+  cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+}
+.lb-pill.on { background: var(--ink); border-color: var(--ink); color: var(--white); }
+
+.lb-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--r-sm); margin-bottom: 6px;
+  cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow);
+}
+.lb-row:hover { border-color: var(--border2); }
+.lb-row.me { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.lb-row.me .lb-sub { color: rgba(255,255,255,0.45); }
+.lb-row.me .lb-val { color: var(--white); }
+
+.lb-rank {
+  font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 500;
+  color: var(--ink3); width: 22px; text-align: center; flex-shrink: 0;
+}
+.r1 { color: var(--gold); }
+.r2 { color: #909090; }
+.r3 { color: #b07060; }
+
+.lb-ava {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--bg2); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.lb-row.me .lb-ava { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.15); }
+.lb-meta { flex: 1; min-width: 0; }
+.lb-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-sub { font-size: 11px; color: var(--ink3); margin-top: 1px; }
+.lb-val { font-family: 'DM Serif Display', serif; font-weight: 700; font-size: 20px; flex-shrink: 0; }
+
+/* ─── TASKS ─── */
+.task-bar { display: flex; gap: 8px; margin-bottom: 14px; }
+.task-input {
+  flex: 1; background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 12px 16px;
+  font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--ink);
+  outline: none; box-shadow: var(--shadow); transition: border-color 0.2s;
+}
+.task-input:focus { border-color: var(--border2); }
+.task-input::placeholder { color: var(--ink4); }
+.task-plus {
+  width: 46px; height: 46px; border-radius: var(--r-sm);
+  background: var(--ink); border: none; color: var(--white);
+  font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--shadow); transition: opacity 0.2s;
+}
+.task-plus:hover { opacity: 0.8; }
+
+.tgroup { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); font-family: 'JetBrains Mono', monospace; margin: 16px 0 8px; font-weight: 500; }
+
+.task-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 16px; background: var(--white);
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  margin-bottom: 6px; cursor: pointer; transition: all 0.2s;
+  box-shadow: var(--shadow);
+}
+.task-row:hover { border-color: var(--border2); }
+.task-row.done { opacity: 0.4; }
+.task-circle {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1.5px solid var(--ink4); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; transition: all 0.25s;
+}
+.task-row.done .task-circle { background: var(--ink); border-color: var(--ink); color: var(--white); }
+.task-txt { flex: 1; font-size: 13px; font-weight: 400; }
+.task-row.done .task-txt { text-decoration: line-through; }
+.ttag { font-size: 9px; padding: 2px 8px; border-radius: 8px; font-weight: 600; letter-spacing: 0.3px; flex-shrink: 0; }
+.t-run { background: rgba(13,13,13,0.07); color: var(--ink2); }
+.t-health { background: rgba(26,122,74,0.08); color: var(--green); }
+.t-gear { background: rgba(201,146,42,0.1); color: var(--gold); }
+
+/* ─── AGENT ─── */
+#panel-agent {
+  display: none; flex-direction: column;
+  background: var(--bg);
+}
+#panel-agent.active { display: flex; }
+
+.chat-body {
+  flex: 1; overflow-y: auto; padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 12px;
+  scrollbar-width: none;
+}
+.chat-body::-webkit-scrollbar { display: none; }
+
+.chat-msg { display: flex; flex-direction: column; max-width: 84%; }
+.chat-msg.user { align-self: flex-end; align-items: flex-end; }
+.chat-msg.bot { align-self: flex-start; align-items: flex-start; }
+
+.msg-from { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink3); font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; font-weight: 500; }
+
+.bubble {
+  padding: 12px 16px; border-radius: 20px;
+  font-size: 14px; line-height: 1.58; font-weight: 400;
+}
+.chat-msg.user .bubble { background: var(--ink); color: var(--white); border-bottom-right-radius: 5px; }
+.chat-msg.bot .bubble { background: var(--white); border: 1px solid var(--border); border-bottom-left-radius: 5px; color: var(--ink); box-shadow: var(--shadow); }
+
+.msg-ts { font-size: 9px; color: var(--ink4); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+.chips-bar {
+  padding: 10px 16px; display: flex; gap: 7px; overflow-x: auto;
+  scrollbar-width: none; border-top: 1px solid var(--border);
+  background: rgba(249,249,247,0.95); backdrop-filter: blur(12px);
+}
+.chips-bar::-webkit-scrollbar { display: none; }
+.q-chip {
+  flex-shrink: 0; padding: 7px 14px; border-radius: 20px;
+  background: var(--white); border: 1px solid var(--border);
+  font-size: 12px; font-weight: 500; color: var(--ink2);
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  font-family: 'DM Sans', sans-serif; box-shadow: var(--shadow);
+}
+.q-chip:hover { border-color: var(--border2); color: var(--ink); }
+
+.chat-footer {
+  flex-shrink: 0; padding: 10px 16px 24px;
+  background: rgba(249,249,247,0.95);
+  backdrop-filter: blur(20px); border-top: 1px solid var(--border);
+}
+.chat-row { display: flex; gap: 8px; align-items: flex-end; }
+
+.chat-field {
+  flex: 1; background: var(--white); border: 1px solid var(--border);
+  border-radius: 22px; padding: 12px 18px;
+  font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--ink);
+  outline: none; resize: none; max-height: 90px; min-height: 46px;
+  line-height: 1.4; transition: border-color 0.2s; box-shadow: var(--shadow);
+}
+.chat-field:focus { border-color: var(--border2); }
+.chat-field::placeholder { color: var(--ink4); }
+
+.chat-btn {
+  width: 46px; height: 46px; border-radius: 50%;
+  border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0; transition: all 0.2s;
+}
+.btn-send { background: var(--ink); color: var(--white); box-shadow: var(--shadow-md); }
+.btn-send:hover { opacity: 0.85; }
+.btn-mic { background: var(--white); border: 1px solid var(--border); box-shadow: var(--shadow); }
+.btn-mic.on { background: var(--ink); color: var(--white); }
+
+.think { display: flex; gap: 4px; padding: 5px 0; align-items: center; }
+.tdot { width: 5px; height: 5px; border-radius: 50%; background: var(--ink4); animation: tdBounce 1.2s infinite; }
+.tdot:nth-child(2) { animation-delay: 0.15s; }
+.tdot:nth-child(3) { animation-delay: 0.3s; }
+@keyframes tdBounce {
+  0%,60%,100% { transform: translateY(0); background: var(--ink4); }
+  30% { transform: translateY(-5px); background: var(--ink2); }
+}
+
+/* ─── PROFILE PANEL ─── */
+.profile-hero {
+  background: var(--ink); color: var(--white);
+  padding: 32px 20px 24px;
+  position: relative; overflow: hidden;
+}
+.ph-noise {
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  pointer-events: none; opacity: 0.6;
+}
+.ph-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+.ph-avatar {
+  width: 72px; height: 72px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; cursor: pointer;
+}
+.ph-edit-btn {
+  padding: 8px 14px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: transparent; color: rgba(255,255,255,0.85);
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+}
+.ph-edit-btn:hover { background: rgba(255,255,255,0.12); color: var(--white); }
+.ph-name { font-family: 'DM Serif Display', serif; font-weight: 900; font-size: 30px; letter-spacing: -0.5px; color: #ffffff; }
+.ph-handle { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
+.ph-stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 20px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.15); }
+.ph-stat { text-align: center; }
+.ph-stat + .ph-stat { border-left: 1px solid rgba(255,255,255,0.15); }
+.ph-val { font-family: 'DM Serif Display', serif; font-weight: 900; font-size: 26px; color: #ffffff; }
+.ph-lbl { font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 3px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; }
+
+.profile-section { padding: 0 16px; margin-top: 16px; }
+.ps-title { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink3); font-family: 'JetBrains Mono', monospace; margin-bottom: 10px; font-weight: 500; }
+
+.ps-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--r-sm); margin-bottom: 6px;
+  cursor: pointer; transition: all 0.2s; box-shadow: var(--shadow);
+}
+.ps-row:hover { border-color: var(--border2); }
+.ps-left { display: flex; align-items: center; gap: 12px; }
+.ps-icon { font-size: 20px; width: 36px; text-align: center; }
+.ps-label { font-weight: 500; font-size: 14px; }
+.ps-val { font-size: 13px; color: var(--ink3); }
+.ps-arrow { color: var(--ink4); font-size: 14px; }
+
+/* ─── BOTTOM NAV ─── */
+.bottom-nav {
+  flex-shrink: 0; display: flex;
+  background: rgba(249,249,247,0.96);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid var(--border); padding: 8px 0 22px;
+  z-index: 50;
+}
+.nav-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 5px 0; cursor: pointer; border: none; background: transparent; transition: opacity 0.2s;
+}
+.nav-btn:active { opacity: 0.5; }
+.nav-ico { font-size: 22px; transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+.nav-btn.on .nav-ico { transform: scale(1.18); }
+.nav-lbl { font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--ink4); font-weight: 600; font-family: 'DM Sans', sans-serif; transition: color 0.2s; }
+.nav-btn.on .nav-lbl { color: var(--ink); }
+
+/* ─── MODAL ─── */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  z-index: 300; display: none; align-items: flex-end; justify-content: center;
+}
+.overlay.open { display: flex; }
+.sheet {
+  width: 100%; max-width: 430px;
+  background: var(--bg); border-radius: 28px 28px 0 0;
+  border-top: 1px solid var(--border);
+  padding: 20px 20px 44px;
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.12);
+  animation: sheetUp 0.38s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes sheetUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.sheet-handle { width: 36px; height: 3px; background: var(--ink4); border-radius: 2px; margin: 0 auto 22px; }
+.sheet-title { font-family: 'DM Serif Display', serif; font-weight: 700; font-size: 24px; letter-spacing: -0.3px; margin-bottom: 20px; }
+.flabel { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink3); font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; display: block; }
+.finput {
+  width: 100%; background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--r-sm); padding: 13px 16px; font-size: 14px;
+  font-family: 'DM Sans', sans-serif; color: var(--ink);
+  outline: none; margin-bottom: 14px; transition: border-color 0.2s;
+  box-shadow: var(--shadow);
+}
+.finput:focus { border-color: var(--border2); }
+.finput::placeholder { color: var(--ink4); }
+.frow { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.primary {
+  width: 100%; padding: 16px; border-radius: var(--r);
+  background: var(--ink); border: none; color: var(--white);
+  font-family: 'DM Serif Display', serif; font-weight: 700;
+  font-size: 18px; letter-spacing: -0.2px; cursor: pointer;
+  box-shadow: var(--shadow-md); transition: opacity 0.2s; margin-top: 4px;
+}
+.primary:hover { opacity: 0.85; }
+
+/* ─── TOAST ─── */
+.toast {
+  position: fixed; top: 68px; left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  background: var(--ink); color: var(--white);
+  border-radius: var(--r-sm); padding: 10px 18px;
+  font-size: 13px; font-weight: 500; z-index: 500;
+  opacity: 0; pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+  white-space: nowrap; max-width: 88vw;
+  box-shadow: var(--shadow-md);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Edit profile overlay */
+.edit-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(8px); z-index: 400;
+  display: none; align-items: flex-end; justify-content: center;
+}
+.edit-overlay.open { display: flex; }
+
+/* ─── EARN ROWS ─── */
+.earn-row {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 14px; background:var(--white);
+  border:1px solid var(--border); border-radius:var(--r-sm);
+  box-shadow:var(--shadow);
+}
+.earn-icon {
+  width:32px;height:32px;border-radius:10px;
+  background:var(--bg2); border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;color:var(--ink2);
+}
+.earn-info { flex:1; }
+.earn-title { font-size:13px; font-weight:600; }
+.earn-sub { font-size:11px; color:var(--ink3); margin-top:1px; }
+.earn-val { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; color:var(--gold); }
+
+/* ─── TIER CARD ─── */
+.tier-card {
+  border-radius:var(--r); border:1px solid var(--border);
+  padding:16px; margin-bottom:8px; background:var(--white);
+  box-shadow:var(--shadow); transition:all 0.2s; position:relative; overflow:hidden;
+}
+.tier-card.current { border-color:var(--ink); background:var(--ink); color:var(--white); }
+.tier-card.locked { opacity:0.5; }
+.tier-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.tier-name { font-family:'DM Serif Display',serif; font-weight:700; font-size:18px; }
+.tier-range { font-size:11px; font-family:'JetBrains Mono',monospace; }
+.tier-card.current .tier-range { color:rgba(255,255,255,0.65); }
+.tier-range:not(.tier-card.current .tier-range) { color:var(--ink3); }
+.tier-bar-track { height:3px; background:rgba(255,255,255,0.1); border-radius:2px; overflow:hidden; }
+.tier-card:not(.current) .tier-bar-track { background:var(--bg2); }
+.tier-bar-fill { height:100%; border-radius:2px; transition:width 1s cubic-bezier(0.4,0,0.2,1); }
+.tier-card.current .tier-bar-fill { background:var(--white); }
+.tier-bar-fill:not(.tier-card.current .tier-bar-fill) { background:var(--ink); }
+.tier-bonus { font-size:11px; margin-top:8px; font-family:'JetBrains Mono',monospace; }
+.tier-card.current .tier-bonus { color:var(--gold); }
+.tier-bonus:not(.tier-card.current .tier-bonus) { color:var(--ink3); }
+.tier-badge {
+  position:absolute; top:14px; right:14px;
+  font-size:9px; padding:3px 8px; border-radius:10px; font-weight:700; letter-spacing:1px;
+}
+.badge-current { background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7); }
+.badge-done { background:rgba(26,122,74,0.1); color:var(--green); }
+.badge-next { background:rgba(201,146,42,0.1); color:var(--gold); border:1px solid rgba(201,146,42,0.2); }
+.badge-locked { background:var(--bg2); color:var(--ink4); }
+
+/* ─── STORE CARDS ─── */
+.store-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.store-card {
+  background:var(--white); border:1px solid var(--border);
+  border-radius:var(--r); padding:16px;
+  box-shadow:var(--shadow); cursor:pointer; transition:all 0.2s;
+  display:flex; flex-direction:column; gap:10px;
+}
+.store-card:hover { border-color:var(--border2); transform:translateY(-2px); box-shadow:var(--shadow-md); }
+.store-card.locked-item { opacity:0.5; cursor:default; }
+.store-card.locked-item:hover { transform:none; box-shadow:var(--shadow); }
+.store-brand {
+  font-size:10px; letter-spacing:2px; text-transform:uppercase;
+  font-family:'JetBrains Mono',monospace; color:var(--ink3); font-weight:500;
+}
+.store-logo {
+  width:44px; height:44px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:800; letter-spacing:0.5px;
+}
+.logo-apple { background:#000; color:#fff; }
+.logo-google { background:#fff; color:#000; border:1px solid #e0e0e0; font-size:10px; }
+.logo-nike { background:#111; color:#fff; font-size:16px; font-style:italic; }
+.logo-adidas { background:#000; color:#fff; font-size:10px; letter-spacing:1px; }
+.store-name { font-weight:700; font-size:14px; letter-spacing:-0.2px; }
+.store-desc { font-size:11px; color:var(--ink3); margin-top:-4px; line-height:1.4; }
+.store-price {
+  display:flex; align-items:center; justify-content:space-between;
+  padding-top:8px; border-top:1px solid var(--border);
+}
+.store-coins { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; color:var(--gold); }
+.store-btn {
+  background:var(--ink); color:var(--white);
+  border:none; border-radius:20px; padding:5px 12px;
+  font-size:11px; font-weight:600; cursor:pointer;
+  font-family:'DM Sans',sans-serif; transition:opacity 0.2s;
+}
+.store-btn:hover { opacity:0.8; }
+.store-btn.locked-btn { background:var(--ink4); cursor:default; }
+.tier-req { font-size:10px; color:var(--ink3); text-align:center; margin-top:4px; }
+
+/* ─── AGENT TABS ─── */
+.agent-tab {
+  flex-shrink:0; padding:7px 14px; border-radius:20px;
+  background:transparent; border:1px solid var(--border);
+  font-size:12px; font-weight:500; color:var(--ink3);
+  cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif;
+  white-space:nowrap; margin-bottom:2px;
+}
+.agent-tab.active { background:var(--ink); border-color:var(--ink); color:var(--white); }
+
+/* ─── COACH CARDS ─── */
+.coach-card {
+  display:flex; align-items:center; gap:12px;
+  padding:13px 14px; background:var(--white);
+  border:1px solid var(--border); border-radius:var(--r-sm);
+  margin-bottom:7px; cursor:pointer; transition:all 0.2s;
+  box-shadow:var(--shadow);
+}
+.coach-card:hover { border-color:var(--border2); transform:translateX(2px); }
+.coach-card.injury { border-left:3px solid #e8321a; }
+.coach-card-icon {
+  width:34px; height:34px; border-radius:10px;
+  background:var(--bg2); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; color:var(--ink2);
+}
+.injury-icon { background:rgba(232,50,26,0.06); border-color:rgba(232,50,26,0.15); color:#e8321a; }
+.coach-card-info { flex:1; }
+.coach-card-title { font-size:13px; font-weight:600; }
+.coach-card-sub { font-size:11px; color:var(--ink3); margin-top:1px; }
+.coach-card-arrow { color:var(--ink4); font-size:16px; }
+
+/* ─── GOAL ROWS ─── */
+.goal-row {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 14px; background:var(--white);
+  border:1.5px solid var(--border); border-radius:var(--r-sm);
+  cursor:pointer; transition:all 0.2s; box-shadow:var(--shadow);
+}
+.goal-row.active { border-color:var(--ink); }
+.goal-row:hover { border-color:var(--border2); }
+.goal-dist { font-family:'DM Serif Display',serif; font-weight:700; font-size:18px; width:36px; }
+.goal-info { flex:1; }
+.goal-name { font-size:13px; font-weight:600; }
+.goal-sub { font-size:11px; color:var(--ink3); margin-top:1px; }
+.goal-check { width:22px; height:22px; border-radius:50%; background:var(--ink); color:var(--white); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+/* ─── AI LOADING ─── */
+.ai-loading { display:flex; gap:4px; align-items:center; padding:4px 0; }
+.ai-dot { width:5px; height:5px; border-radius:50%; background:var(--ink3); animation:aiDot 1.2s infinite; }
+.ai-dot:nth-child(2) { animation-delay:0.15s; }
+.ai-dot:nth-child(3) { animation-delay:0.3s; }
+@keyframes aiDot { 0%,60%,100%{transform:translateY(0);background:var(--ink4);} 30%{transform:translateY(-5px);background:var(--ink);} }
+
+/* ─── PRO SYSTEM ─── */
+.pro-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  background:linear-gradient(135deg,#c9922a,#f0c060);
+  color:#fff; font-size:9px; font-weight:700;
+  letter-spacing:1.5px; padding:3px 8px; border-radius:10px;
+  font-family:'JetBrains Mono',monospace; vertical-align:middle;
+}
+.msg-counter {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 16px; background:rgba(201,146,42,0.08);
+  border-top:1px solid rgba(201,146,42,0.15);
+  font-size:11px; color:var(--gold); font-family:'JetBrains Mono',monospace;
+}
+.msg-counter-bar {
+  height:3px; background:rgba(201,146,42,0.15); border-radius:2px;
+  overflow:hidden; margin:0 16px 0;
+}
+.msg-counter-fill {
+  height:100%; background:linear-gradient(90deg,#c9922a,#f0c060);
+  border-radius:2px; transition:width 0.4s ease;
+}
+.paywall-overlay {
+  position:fixed; inset:0; z-index:800;
+  background:rgba(0,0,0,0.6);
+  backdrop-filter:blur(12px);
+  display:none; align-items:flex-end; justify-content:center;
+}
+.paywall-overlay.open { display:flex; }
+.paywall-sheet {
+  width:100%; max-width:430px;
+  background:var(--white); border-radius:28px 28px 0 0;
+  padding:28px 24px 50px;
+  animation:sheetUp 0.38s cubic-bezier(0.16,1,0.3,1);
+}
+.paywall-handle { width:36px; height:3px; background:var(--ink4); border-radius:2px; margin:0 auto 24px; }
+.paywall-crown {
+  width:56px; height:56px; border-radius:18px;
+  background:linear-gradient(135deg,#c9922a,#f0c060);
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 16px; font-size:26px;
+  box-shadow:0 8px 24px rgba(201,146,42,0.35);
+}
+.paywall-title {
+  font-family:'DM Serif Display',serif; font-weight:900;
+  font-size:26px; letter-spacing:-0.5px; text-align:center; margin-bottom:6px;
+}
+.paywall-sub { font-size:13px; color:var(--ink3); text-align:center; margin-bottom:24px; line-height:1.5; }
+.paywall-features { display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+.paywall-feat {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 14px; background:var(--bg);
+  border:1px solid var(--border); border-radius:var(--r-sm);
+}
+.paywall-feat-icon {
+  width:34px; height:34px; border-radius:10px;
+  background:linear-gradient(135deg,#c9922a,#f0c060);
+  display:flex; align-items:center; justify-content:center;
+  color:white; flex-shrink:0;
+}
+.paywall-feat-text { flex:1; }
+.paywall-feat-title { font-size:13px; font-weight:600; }
+.paywall-feat-sub { font-size:11px; color:var(--ink3); margin-top:1px; }
+.paywall-price {
+  text-align:center; margin-bottom:16px;
+}
+.paywall-amount {
+  font-family:'DM Serif Display',serif; font-weight:900;
+  font-size:42px; letter-spacing:-1px; line-height:1;
+}
+.paywall-period { font-size:13px; color:var(--ink3); margin-top:2px; }
+.paywall-btn {
+  width:100%; padding:16px; border-radius:var(--r);
+  background:linear-gradient(135deg,#c9922a,#f0c060);
+  border:none; color:white;
+  font-family:'DM Serif Display',serif; font-weight:700;
+  font-size:18px; letter-spacing:-0.3px; cursor:pointer;
+  box-shadow:0 6px 20px rgba(201,146,42,0.35);
+  transition:opacity 0.2s; margin-bottom:10px;
+}
+.paywall-btn:hover { opacity:0.88; }
+.paywall-dismiss {
+  width:100%; padding:10px; border-radius:var(--r);
+  background:transparent; border:none; color:var(--ink3);
+  font-size:13px; cursor:pointer; font-family:'DM Sans',sans-serif;
+}
+
+
+/* ─── LEADERBOARD TOGGLE ─── */
+.lb-toggle {
+  flex:1; padding:9px; border-radius:10px;
+  background:transparent; border:none;
+  font-size:13px; font-weight:600; color:var(--ink3);
+  cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif;
+}
+.lb-toggle.active { background:var(--white); color:var(--ink); box-shadow:var(--shadow); }
+
+.invite-bar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:13px 14px; background:var(--white);
+  border:1px solid var(--border); border-radius:var(--r-sm);
+  margin-bottom:14px; cursor:pointer; transition:all 0.2s;
+  box-shadow:var(--shadow);
+}
+.invite-bar:hover { border-color:var(--border2); }
+
+/* ─── ONBOARDING ─── */
+.ob-step {
+  width: 20px; height: 3px; border-radius: 2px;
+  background: rgba(255,255,255,0.2); transition: all 0.3s;
+}
+.ob-step.active { width: 32px; background: white; }
+
+
+.font-option {
+  display:flex; align-items:center; gap:12px;
+  padding:12px 14px;
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  cursor:pointer;
+  transition:all 0.2s;
+  background:var(--bg);
+}
+.font-option:hover { border-color:var(--border2); }
+.font-option.active { border-color:var(--ink); background:var(--white); }
+.font-preview { font-size:17px; line-height:1.2; flex:1; letter-spacing:-0.3px; }
+.font-meta { text-align:right; }
+.font-name { font-size:12px; font-weight:600; color:var(--ink); }
+.font-desc { font-size:10px; color:var(--ink3); margin-top:1px; letter-spacing:0.5px; }
+.font-check {
+  width:22px; height:22px; border-radius:50%;
+  background:var(--ink); color:var(--white);
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; transition:opacity 0.2s;
+}
+
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-wordmark">STRIDE</div>
+  <div class="splash-tagline">Every stride counts.</div>
+  <div class="splash-line"></div>
+  <div class="splash-loader"><div class="splash-loader-fill"></div></div>
+</div>
+
+<!-- APP -->
+<div class="shell" id="shell">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="wordmark">Stride</div>
+    <div class="header-right">
+      <div id="header-pro-badge" class="pro-badge" style="display:none;cursor:pointer;margin-right:4px;" onclick="showToast('Stride Pro is active')">PRO</div>
+      <div class="hbtn" onclick="showToast('3 new notifications')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <div class="dot"></div>
+      </div>
+      <div class="hbtn" onclick="switchPanel('profile')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANELS -->
+  <div class="panels">
+
+    <!-- ══ HOME ══ -->
+    <div id="panel-home" class="panel active">
+      <div style="padding-bottom:100px;">
+        <div class="greeting-bar">
+          <div class="greeting-text">
+            <div class="sup">Good morning</div>
+            <div class="name">Jose.</div>
+          </div>
+          <div class="streak-badge">
+            <div class="streak-num">14</div>
+            <div>day streak</div>
+          </div>
+        </div>
+
+        <!-- Level card -->
+        <div class="level-card" style="margin-top:14px;" onclick="switchPanel('progress')">
+          <div class="lc-noise"></div>
+          <div class="lc-top">
+            <div>
+              <div class="lc-level" id="lc-tier-label">Pro · 312 km total</div>
+              <div class="lc-class" id="lc-name">Jose<br>Fernandez</div>
+              <div class="lc-loc">Santa Clarita, CA</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="lc-num" id="lc-num" style="font-size:36px;line-height:1;color:rgba(255,255,255,0.15);font-family:'DM Serif Display',serif;font-weight:900;">PRO</div>
+              <div style="font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:2px;margin-top:4px;">TIER</div>
+            </div>
+          </div>
+          <div class="lc-xp-label">
+            <span id="lc-prog-label">km to Elite</span>
+            <span id="lc-prog-val">312 <span style="color:rgba(255,255,255,0.35)">/ 300 → Elite at 500</span></span>
+          </div>
+          <div class="lc-track"><div class="lc-fill" id="lc-fill-bar"></div></div>
+          <div class="lc-stats">
+            <div class="lc-stat"><div class="lc-stat-v" id="lcs-runs">47</div><div class="lc-stat-l">Runs</div></div>
+            <div class="lc-stat"><div class="lc-stat-v" id="lcs-km">312</div><div class="lc-stat-l">km</div></div>
+            <div class="lc-stat" onclick="event.stopPropagation(); switchPanel('store')" style="cursor:pointer;">
+              <div class="lc-stat-v" id="lcs-coins" style="color:#c9922a;">1,240</div>
+              <div class="lc-stat-l">Stride Coins</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly chart -->
+        <div class="chart-section" style="margin-top:14px;">
+          <div class="cs-header">
+            <div>
+              <div class="cs-title">Weekly Progress</div>
+              <div class="cs-sub">Apr 21 – Apr 27</div>
+            </div>
+            <div class="cs-total">
+              <div class="cs-total-num">61</div>
+              <div class="cs-total-unit">km this week</div>
+            </div>
+          </div>
+          <div class="bar-chart" id="barChart"></div>
+          <div class="bar-chart" id="barDays" style="height:auto; margin-top:0; gap:8px;"></div>
+        </div>
+
+        <!-- Strava -->
+        <div class="strava-banner" onclick="showToast(' Syncing with Strava…')">
+          <div class="strava-orb">S</div>
+          <div class="strava-info">
+            <div class="strava-name">Strava Connected</div>
+            <div class="strava-sub">47 activities · Last sync 2h ago</div>
+          </div>
+          <button class="strava-sync" onclick="event.stopPropagation(); showToast('Syncing with Strava…')">Sync</button>
+        </div>
+
+        <!-- Recent runs -->
+        <div style="padding: 0 16px; margin-bottom: 6px; display:flex; align-items:center; justify-content:space-between;">
+          <div style="font-size:13px; font-weight:600; letter-spacing:0.2px;">Recent Runs</div>
+          <div style="font-size:12px; color:var(--ink3); cursor:pointer;" onclick="switchPanel('runs')">See all →</div>
+        </div>
+        <div class="run-cards">
+          <div class="run-card" onclick="showToast(' Personal Best! +350 XP')">
+            <div class="rc-top">
+              <div><div class="rc-name">Santa Clarita 10K</div><div class="rc-date">APR 26 · 07:15</div></div>
+              <div class="rc-chip chip-pb">Personal Best</div>
+            </div>
+            <div class="rc-metrics">
+              <div class="rc-m"><div class="rc-val">10.2</div><div class="rc-unit">km</div></div>
+              <div class="rc-m"><div class="rc-val">4:52</div><div class="rc-unit">/ km</div></div>
+              <div class="rc-m"><div class="rc-val">49:41</div><div class="rc-unit">time</div></div>
+              <div class="rc-m"><div class="rc-val">148</div><div class="rc-unit">bpm</div></div>
+            </div>
+            <div class="rc-xp"><div class="xp-pip"></div><div class="xp-label"><strong>+350 XP</strong> · Personal Best Bonus +100</div></div>
+          </div>
+          <div class="run-card" onclick="showToast('+200 XP earned')">
+            <div class="rc-top">
+              <div><div class="rc-name">Morning Easy Run</div><div class="rc-date">APR 25 · 06:30</div></div>
+              <div class="rc-chip chip-strava">via Strava</div>
+            </div>
+            <div class="rc-metrics">
+              <div class="rc-m"><div class="rc-val">8.5</div><div class="rc-unit">km</div></div>
+              <div class="rc-m"><div class="rc-val">5:20</div><div class="rc-unit">/ km</div></div>
+              <div class="rc-m"><div class="rc-val">45:12</div><div class="rc-unit">time</div></div>
+              <div class="rc-m"><div class="rc-val">138</div><div class="rc-unit">bpm</div></div>
+            </div>
+            <div class="rc-xp"><div class="xp-pip"></div><div class="xp-label"><strong>+200 XP</strong> · Easy Run</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ RUNS ══ -->
+    <div id="panel-runs" class="panel">
+      <div class="panel-pad">
+        <button class="log-btn" onclick="openModal()">＋ Log New Run</button>
+        <div class="strava-banner" style="margin-bottom:14px;" onclick="showToast('Syncing with Strava…')">
+          <div class="strava-orb">S</div>
+          <div class="strava-info"><div class="strava-name">Strava Connected</div><div class="strava-sub">Tap to sync latest activities</div></div>
+          <button class="strava-sync">Sync</button>
+        </div>
+        <div class="run-cards">
+          <div class="run-card" onclick="showToast('+350 XP · Personal Best')">
+            <div class="rc-top"><div><div class="rc-name">Santa Clarita 10K</div><div class="rc-date">APR 26 · 07:15</div></div><div class="rc-chip chip-pb">PB</div></div>
+            <div class="rc-metrics">
+              <div class="rc-m"><div class="rc-val">10.2</div><div class="rc-unit">km</div></div>
+              <div class="rc-m"><div class="rc-val">4:52</div><div class="rc-unit">/ km</div></div>
+              <div class="rc-m"><div class="rc-val">49:41</div><div class="rc-unit">time</div></div>
+              <div class="rc-m"><div class="rc-val">148</div><div class="rc-unit">bpm</div></div>
+            </div>
+            <div class="rc-xp"><div class="xp-pip"></div><div class="xp-label"><strong>+350 XP</strong> · PB Bonus</div></div>
+          </div>
+          <div class="run-card" onclick="showToast('+200 XP')">
+            <div class="rc-top"><div><div class="rc-name">Morning Easy Run</div><div class="rc-date">APR 25 · 06:30</div></div><div class="rc-chip chip-strava">via Strava</div></div>
+            <div class="rc-metrics">
+              <div class="rc-m"><div class="rc-val">8.5</div><div class="rc-unit">km</div></div>
+              <div class="rc-m"><div class="rc-val">5:20</div><div class="rc-unit">/ km</div></div>
+              <div class="rc-m"><div class="rc-val">45:12</div><div class="rc-unit">time</div></div>
+              <div class="rc-m"><div class="rc-val">138</div><div class="rc-unit">bpm</div></div>
+            </div>
+            <div class="rc-xp"><div class="xp-pip"></div><div class="xp-label"><strong>+200 XP</strong></div></div>
+          </div>
+          <div class="run-card" onclick="showToast('+180 XP · Trail Bonus')">
+            <div class="rc-top"><div><div class="rc-name">Vasquez Rocks Trail</div><div class="rc-date">APR 23 · 07:00</div></div><div class="rc-chip chip-trail">Trail</div></div>
+            <div class="rc-metrics">
+              <div class="rc-m"><div class="rc-val">12.3</div><div class="rc-unit">km</div></div>
+              <div class="rc-m"><div class="rc-val">6:10</div><div class="rc-unit">/ km</div></div>
+              <div class="rc-m"><div class="rc-val">1:15h</div><div class="rc-unit">time</div></div>
+              <div class="rc-m"><div class="rc-val">155</div><div class="rc-unit">bpm</div></div>
+            </div>
+            <div class="rc-xp"><div class="xp-pip"></div><div class="xp-label"><strong>+180 XP</strong> · Trail Bonus</div></div>
+          </div>
+          <div class="run-card" onclick="showToast('+160 XP')">
+            <div class="rc-top"><div><div class="rc-name">Tempo Intervals</div><div class="rc-date">APR 21 · 05:45</div></div><div class="rc-chip chip-strava">via Strava</div></div>
+            <div class="rc-metrics">
+              <div class="rc-m"><div class="rc-val">7.0</div><div class="rc-unit">km</div></div>
+              <div class="rc-m"><div class="rc-val">4:58</div><div class="rc-unit">/ km</div></div>
+              <div class="rc-m"><div class="rc-val">34:50</div><div class="rc-unit">time</div></div>
+              <div class="rc-m"><div class="rc-val">162</div><div class="rc-unit">bpm</div></div>
+            </div>
+            <div class="rc-xp"><div class="xp-pip"></div><div class="xp-label"><strong>+160 XP</strong></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PROGRESS ══ -->
+    <div id="panel-progress" class="panel">
+      <div class="panel-pad">
+
+        <!-- Coins wallet -->
+        <div style="background:var(--ink);border-radius:var(--r);padding:20px;margin-bottom:14px;position:relative;overflow:hidden;">
+          <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(201,146,42,0.15);pointer-events:none;"></div>
+          <div style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.7);text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:6px;font-weight:600;">Your Balance</div>
+          <div style="font-family:'DM Serif Display',serif;font-weight:900;font-size:42px;color:#c9922a;letter-spacing:-1px;line-height:1;" id="wallet-coins">1,240</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.65);margin-top:4px;font-weight:500;">Stride Coins</div>
+          <button onclick="switchPanel('store')" style="position:absolute;top:20px;right:20px;background:rgba(201,146,42,0.15);border:1px solid rgba(201,146,42,0.3);border-radius:20px;padding:7px 14px;color:#c9922a;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Spend →</button>
+        </div>
+
+        <!-- Tier progression -->
+        <div style="font-size:10px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:10px;">Tier Progression</div>
+
+        <div id="tier-cards"></div>
+
+        <!-- How to earn -->
+        <div style="font-size:10px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin:20px 0 10px;">How to Earn Stride Coins</div>
+        <div style="display:flex;flex-direction:column;gap:6px;" id="earn-list">
+          <div class="earn-row"><div class="earn-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="6" r="2"/><path d="M20 9l-6.5 1.5L11 15l-4 5H4l4-6 2-3-3-1.5 2-4.5 4 1 2.5-2.5"/></svg></div><div class="earn-info"><div class="earn-title">Complete a run</div><div class="earn-sub">10 SC per km</div></div><div class="earn-val">+10/km</div></div>
+          <div class="earn-row"><div class="earn-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div><div class="earn-info"><div class="earn-title">Personal Best</div><div class="earn-sub">Bonus on every PB</div></div><div class="earn-val">+100</div></div>
+          <div class="earn-row"><div class="earn-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="earn-info"><div class="earn-title">7-day streak</div><div class="earn-sub">Weekly consistency bonus</div></div><div class="earn-val">+200</div></div>
+          <div class="earn-row"><div class="earn-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/></svg></div><div class="earn-info"><div class="earn-title">Reach a new tier</div><div class="earn-sub">Level up bonus</div></div><div class="earn-val">+500</div></div>
+          <div class="earn-row"><div class="earn-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="earn-info"><div class="earn-title">Refer a friend</div><div class="earn-sub">When they complete first run</div></div><div class="earn-val">+300</div></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ STORE ══ -->
+    <div id="panel-store" class="panel">
+      <div class="panel-pad">
+
+        <!-- Store balance -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div>
+            <div style="font-family:'DM Serif Display',serif;font-weight:700;font-size:22px;letter-spacing:-0.3px;">Rewards Store</div>
+            <div style="font-size:12px;color:var(--ink3);margin-top:2px;">Spend your Stride Coins</div>
+          </div>
+          <div style="background:var(--ink);color:#c9922a;border-radius:20px;padding:8px 14px;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;" id="store-balance">1,240 SC</div>
+        </div>
+
+        <!-- Category pills -->
+        <div class="lb-pills" style="margin-bottom:16px;">
+          <button class="lb-pill on" onclick="filterStore(this,'all')">All</button>
+          <button class="lb-pill" onclick="filterStore(this,'apple')">App Store</button>
+          <button class="lb-pill" onclick="filterStore(this,'google')">Google Play</button>
+          <button class="lb-pill" onclick="filterStore(this,'gear')">Gear</button>
+        </div>
+
+        <div id="store-grid"></div>
+
+      </div>
+    </div>
+
+    <!-- ══ LEADERBOARD ══ (kept, just not in nav — accessible from home) -->
+    <!-- ══ LEADERBOARD ══ -->
+    <div id="panel-leaderboard" class="panel">
+      <div class="panel-pad">
+
+        <!-- Friends / Global toggle -->
+        <div style="display:flex;background:var(--bg2);border-radius:14px;padding:4px;margin-bottom:16px;border:1px solid var(--border);">
+          <button class="lb-toggle active" id="lbt-friends" onclick="switchLb('friends')">Friends</button>
+          <button class="lb-toggle" id="lbt-global" onclick="switchLb('global')">Global</button>
+        </div>
+
+        <!-- FRIENDS VIEW -->
+        <div id="lb-friends-view">
+          <div class="invite-bar" onclick="openInviteModal()">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="width:40px;height:40px;border-radius:50%;border:2px dashed var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+              <div><div style="font-size:13px;font-weight:600;">Invite Friends to Stride</div><div style="font-size:11px;color:var(--ink3);margin-top:1px;">Earn 300 SC for each friend who joins</div></div>
+            </div>
+            <div style="font-size:12px;font-weight:600;color:var(--gold);">Invite ›</div>
+          </div>
+
+          <div class="lb-pills" style="margin-bottom:14px;">
+            <button class="lb-pill on" onclick="lbPill(this)">Weekly km</button>
+            <button class="lb-pill" onclick="lbPill(this)">Stride Coins</button>
+            <button class="lb-pill" onclick="lbPill(this)">Streak</button>
+            <button class="lb-pill" onclick="lbPill(this)">Best Pace</button>
+          </div>
+
+          <!-- Your position -->
+          <div style="background:var(--ink);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+            <div style="font-family:'DM Serif Display',serif;font-size:28px;color:rgba(255,255,255,0.2);width:28px;text-align:center;">#2</div>
+            <div style="width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0;">JF</div>
+            <div style="flex:1;"><div style="font-weight:700;font-size:14px;color:white;">Jose F. <span style="font-size:9px;opacity:0.4;letter-spacing:1px;">YOU</span></div><div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:1px;">Pro tier · 14-day streak</div></div>
+            <div style="text-align:right;"><div style="font-family:'DM Serif Display',serif;font-size:22px;color:white;">38<span style="font-size:11px;opacity:0.5;">km</span></div><div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px;">6km behind #1</div></div>
+          </div>
+
+          <div class="lb-row" style="border-left:3px solid var(--gold);">
+            <div class="lb-rank r1">1</div><div class="lb-ava" style="background:#f0ede8;font-size:13px;font-weight:700;color:#3a3a3a;">MR</div>
+            <div class="lb-meta"><div class="lb-name">Miguel R.</div><div class="lb-sub">Santa Clarita · Pro</div></div>
+            <div style="text-align:right;"><div class="lb-val">44<span style="font-size:11px;font-weight:400;color:var(--ink3);">km</span></div><div style="font-size:10px;color:var(--gold);margin-top:2px;">1,580 SC</div></div>
+          </div>
+          <div class="lb-row me">
+            <div class="lb-rank" style="color:rgba(255,255,255,0.4)">2</div><div class="lb-ava" style="background:rgba(255,255,255,0.15);font-size:13px;font-weight:700;color:white;">JF</div>
+            <div class="lb-meta"><div class="lb-name">Jose F. <span style="font-size:9px;opacity:0.5;letter-spacing:1px;">YOU</span></div><div class="lb-sub">Santa Clarita · Pro</div></div>
+            <div style="text-align:right;"><div class="lb-val" style="color:white;">38<span style="font-size:11px;font-weight:400;opacity:0.5;">km</span></div><div style="font-size:10px;color:var(--gold);margin-top:2px;">1,240 SC</div></div>
+          </div>
+          <div class="lb-row">
+            <div class="lb-rank r3">3</div><div class="lb-ava" style="background:#f0ede8;font-size:13px;font-weight:700;color:#3a3a3a;">AL</div>
+            <div class="lb-meta"><div class="lb-name">Ana L.</div><div class="lb-sub">Valencia · Amateur</div></div>
+            <div style="text-align:right;"><div class="lb-val">31<span style="font-size:11px;font-weight:400;color:var(--ink3);">km</span></div><div style="font-size:10px;color:var(--gold);margin-top:2px;">890 SC</div></div>
+          </div>
+          <div class="lb-row">
+            <div class="lb-rank">4</div><div class="lb-ava" style="background:#f0ede8;font-size:13px;font-weight:700;color:#3a3a3a;">CR</div>
+            <div class="lb-meta"><div class="lb-name">Carlos R.</div><div class="lb-sub">Newhall · Amateur</div></div>
+            <div style="text-align:right;"><div class="lb-val">24<span style="font-size:11px;font-weight:400;color:var(--ink3);">km</span></div><div style="font-size:10px;color:var(--gold);margin-top:2px;">620 SC</div></div>
+          </div>
+          <div class="lb-row">
+            <div class="lb-rank">5</div><div class="lb-ava" style="background:#f0ede8;font-size:13px;font-weight:700;color:#3a3a3a;">PM</div>
+            <div class="lb-meta"><div class="lb-name">Pedro M.</div><div class="lb-sub">Canyon Country · Rookie</div></div>
+            <div style="text-align:right;"><div class="lb-val">18<span style="font-size:11px;font-weight:400;color:var(--ink3);">km</span></div><div style="font-size:10px;color:var(--gold);margin-top:2px;">410 SC</div></div>
+          </div>
+          <div class="lb-row">
+            <div class="lb-rank">6</div><div class="lb-ava" style="background:#f0ede8;font-size:13px;font-weight:700;color:#3a3a3a;">SG</div>
+            <div class="lb-meta"><div class="lb-name">Sofia G.</div><div class="lb-sub">Saugus · Rookie</div></div>
+            <div style="text-align:right;"><div class="lb-val">12<span style="font-size:11px;font-weight:400;color:var(--ink3);">km</span></div><div style="font-size:10px;color:var(--gold);margin-top:2px;">240 SC</div></div>
+          </div>
+
+          <!-- Gift coins -->
+          <div style="margin-top:14px;background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);">
+            <div style="font-size:12px;font-weight:600;margin-bottom:10px;">Gift Stride Coins to a Friend</div>
+            <div style="display:flex;gap:8px;">
+              <select id="gift-friend" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--ink);outline:none;">
+                <option>Select friend…</option>
+                <option>Miguel R.</option>
+                <option>Ana L.</option>
+                <option>Carlos R.</option>
+                <option>Pedro M.</option>
+                <option>Sofia G.</option>
+              </select>
+              <input id="gift-amount" type="number" placeholder="SC" style="width:70px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--ink);outline:none;text-align:center;">
+              <button onclick="giftCoins()" style="background:var(--ink);border:none;border-radius:var(--r-sm);padding:10px 14px;color:white;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Send</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- GLOBAL VIEW -->
+        <div id="lb-global-view" style="display:none;">
+          <div class="lb-pills" style="margin-bottom:14px;">
+            <button class="lb-pill on" onclick="lbPill(this)">Weekly km</button>
+            <button class="lb-pill" onclick="lbPill(this)">Best Pace</button>
+            <button class="lb-pill" onclick="lbPill(this)">Coins</button>
+            <button class="lb-pill" onclick="lbPill(this)">Streak</button>
+            <button class="lb-pill" onclick="lbPill(this)">Monthly</button>
+          </div>
+          <div class="lb-row"><div class="lb-rank r1">1</div><div class="lb-ava" style="background:#f0ede8;font-size:13px;font-weight:700;color:#3a3a3a;">MR</div><div class="lb-meta"><div class="lb-name">Miguel R.</div><div class="lb-sub">Santa Clarita · Legend</div></div><div class="lb-val">89<span style="font-size:11px;font-weight:400;color:var(--ink3);">km</span></div></div>
+          <div class="lb-row"><div class="lb-rank r2">2</div><div class="lb-ava" style="background:#f0ede8;font-size:13px;font-weight:700;color:#3a3a3a;">AC</div><div class="lb-meta"><div class="lb-name">Ana C.</div><div class="lb-sub">Valencia · Elite</div></div><div class="lb-val">76<span style="font-size:11px;font-weight:400;color:var(--ink3);">km</span></div></div>
+          <div class="lb-row"><div class="lb-rank r3">3</div><div class="lb-ava" style="background:#f0ede8;font-size:13px;font-weight:700;color:#3a3a3a;">CM</div><div class="lb-meta"><div class="lb-name">Carlos M.</div><div class="lb-sub">Newhall · Elite</div></div><div class="lb-val">68<span style="font-size:11px;font-weight:400;color:var(--ink3);">km</span></div></div>
+          <div class="lb-row"><div class="lb-rank">4</div><div class="lb-ava" style="background:#f0ede8;font-size:13px;font-weight:700;color:#3a3a3a;">DP</div><div class="lb-meta"><div class="lb-name">Diana P.</div><div class="lb-sub">Canyon Country · Pro</div></div><div class="lb-val">55<span style="font-size:11px;font-weight:400;color:var(--ink3);">km</span></div></div>
+          <div class="lb-row"><div class="lb-rank">5</div><div class="lb-ava" style="background:#f0ede8;font-size:13px;font-weight:700;color:#3a3a3a;">RG</div><div class="lb-meta"><div class="lb-name">Roberto G.</div><div class="lb-sub">Saugus · Pro</div></div><div class="lb-val">48<span style="font-size:11px;font-weight:400;color:var(--ink3);">km</span></div></div>
+          <div class="lb-row me"><div class="lb-rank" style="color:rgba(255,255,255,0.4)">6</div><div class="lb-ava" style="background:rgba(255,255,255,0.15);font-size:13px;font-weight:700;color:white;">JF</div><div class="lb-meta"><div class="lb-name">Jose F. <span style="font-size:9px;opacity:0.5;letter-spacing:1px;">YOU</span></div><div class="lb-sub">Santa Clarita · Pro</div></div><div class="lb-val" style="color:white;">38<span style="font-size:11px;font-weight:400;opacity:0.5;">km</span></div></div>
+          <div class="lb-row"><div class="lb-rank">7</div><div class="lb-ava" style="background:#f0ede8;font-size:13px;font-weight:700;color:#3a3a3a;">LT</div><div class="lb-meta"><div class="lb-name">Lisa T.</div><div class="lb-sub">Stevenson Ranch · Amateur</div></div><div class="lb-val">42<span style="font-size:11px;font-weight:400;color:var(--ink3);">km</span></div></div>
+          <div class="lb-row"><div class="lb-rank">8</div><div class="lb-ava" style="background:#f0ede8;font-size:13px;font-weight:700;color:#3a3a3a;">MA</div><div class="lb-meta"><div class="lb-name">Marco A.</div><div class="lb-sub">Castaic · Amateur</div></div><div class="lb-val">38<span style="font-size:11px;font-weight:400;color:var(--ink3);">km</span></div></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- INVITE MODAL -->
+    <div class="overlay" id="inviteModal" onclick="closeInvite(event)">
+      <div class="sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">Invite Friends</div>
+        <div style="font-size:13px;color:var(--ink3);margin-bottom:20px;line-height:1.6;">Share your invite link. You earn <strong style="color:var(--gold);">300 Stride Coins</strong> for every friend who joins and completes their first run.</div>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink2);">stride.app/join/josefco</div>
+          <button onclick="copyInvite()" style="background:var(--ink);border:none;border-radius:10px;padding:7px 12px;color:white;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Copy</button>
+        </div>
+        <button class="primary" onclick="shareInvite()">Share Invite Link</button>
+      </div>
+    </div>
+
+
+    <!-- ══ TASKS ══ -->
+    <div id="panel-tasks" class="panel">
+      <div class="panel-pad">
+        <div class="task-bar">
+          <input class="task-input" id="taskInput" placeholder="Add a task…" onkeydown="if(event.key==='Enter')addTask()">
+          <button class="task-plus" onclick="addTask()">＋</button>
+        </div>
+        <div class="tgroup">Today</div>
+        <div id="taskList">
+          <div class="task-row" onclick="checkTask(this)">
+            <div class="task-circle"></div><div class="task-txt">Morning run — 6km recovery pace</div><div class="ttag t-run">Run</div>
+          </div>
+          <div class="task-row" onclick="checkTask(this)">
+            <div class="task-circle"></div><div class="task-txt">Buy energy gels for race</div><div class="ttag t-gear">Gear</div>
+          </div>
+          <div class="task-row" onclick="checkTask(this)">
+            <div class="task-circle"></div><div class="task-txt">Foam roll + stretch 20 min</div><div class="ttag t-health">Health</div>
+          </div>
+          <div class="task-row" onclick="checkTask(this)">
+            <div class="task-circle"></div><div class="task-txt">Prep race kit for Saturday</div><div class="ttag t-run">Run</div>
+          </div>
+          <div class="task-row done" onclick="checkTask(this)">
+            <div class="task-circle"></div><div class="task-txt">Hydrate 3L today</div><div class="ttag t-health">Health</div>
+          </div>
+        </div>
+        <div class="tgroup">Upcoming</div>
+        <div class="task-row" onclick="checkTask(this)"><div class="task-circle"></div><div class="task-txt">Saturday run 6AM — 1 hour</div><div class="ttag t-run">Run</div></div>
+        <div class="task-row" onclick="checkTask(this)"><div class="task-circle"></div><div class="task-txt">Review new running shoes</div><div class="ttag t-gear">Gear</div></div>
+      </div>
+    </div>
+
+    <!-- ══ AGENT ══ -->
+    <div id="panel-agent" class="panel" style="overflow:hidden;">
+      <div style="display:flex; flex-direction:column; height:100%;">
+
+        <!-- Agent mode tabs -->
+        <div style="display:flex;gap:6px;padding:10px 16px 8px;background:var(--bg);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;">
+          <button class="agent-tab active" id="atab-chat" onclick="setAgentTab('chat')">Chat</button>
+          <button class="agent-tab" id="atab-coach" onclick="setAgentTab('coach')">Coach</button>
+          <button class="agent-tab" id="atab-plan" onclick="setAgentTab('plan')">Training Plan</button>
+          <button class="agent-tab" id="atab-injury" onclick="setAgentTab('injury')">Injury & Recovery</button>
+        </div>
+
+        <!-- Free message counter -->
+        <div id="msg-counter-wrap" style="background:var(--bg);">
+          <div class="msg-counter">
+            <span id="msg-counter-text">5 free messages remaining this month</span>
+            <span class="pro-badge">FREE</span>
+          </div>
+          <div class="msg-counter-bar"><div class="msg-counter-fill" id="msg-bar" style="width:100%"></div></div>
+          <div style="height:8px;background:var(--bg);"></div>
+        </div>
+
+        <!-- ── CHAT ── -->
+        <div id="aview-chat" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+          <div class="chat-body" id="chatBody">
+            <div class="chat-msg bot">
+              <div class="msg-from">Stride Coach · Claude AI</div>
+              <div class="bubble">Hi Jose! I'm Claude, your AI running coach inside Stride. I'm made by Anthropic and I'm here to help you train smarter, recover faster, and reach your goals. What do you need today?</div>
+              <div class="msg-ts">Now</div>
+            </div>
+          </div>
+          <div class="chips-bar">
+            <button class="q-chip" onclick="qSend('Create me a training plan for a 10K')">Training plan</button>
+            <button class="q-chip" onclick="qSend('How do I recover faster after a long run')">Recovery</button>
+            <button class="q-chip" onclick="qSend('My knee hurts when I run, what do I do')">Knee pain</button>
+            <button class="q-chip" onclick="qSend('How do I run faster')">Run faster</button>
+            <button class="q-chip" onclick="qSend('My stats')">My stats</button>
+            <button class="q-chip" onclick="qSend('Check my email')">Check email</button>
+          </div>
+          <div class="chat-footer">
+            <div class="chat-row">
+              <button class="chat-btn btn-mic" id="micBtn" onclick="toggleMic()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              </button>
+              <textarea class="chat-field" id="chatField" placeholder="Ask your coach anything…" rows="1" onkeydown="onKey(event)" oninput="grow(this)"></textarea>
+              <button class="chat-btn btn-send" onclick="send()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── COACH ── -->
+        <div id="aview-coach" style="display:none;flex:1;overflow-y:auto;padding:16px;scrollbar-width:none;">
+          <div style="font-family:'DM Serif Display',serif;font-weight:700;font-size:20px;margin-bottom:2px;">AI Coach</div>
+          <div style="font-size:12px;color:var(--ink3);margin-bottom:16px;">Tap any topic for a personalized tip</div>
+
+          <div style="font-size:10px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:8px;">Training</div>
+          <div class="coach-card" onclick="askCoach('warmup','Give me a 10-minute dynamic warmup routine for a Pro-level runner about to do a tempo run')">
+            <div class="coach-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="coach-card-info"><div class="coach-card-title">Pre-Run Warmup</div><div class="coach-card-sub">Dynamic routine before training</div></div>
+            <div class="coach-card-arrow">›</div>
+          </div>
+          <div class="coach-card" onclick="askCoach('speed','Give me a speed interval workout for a runner with 4:52/km best pace who wants to break 4:30/km')">
+            <div class="coach-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+            <div class="coach-card-info"><div class="coach-card-title">Speed Intervals</div><div class="coach-card-sub">Break your personal record</div></div>
+            <div class="coach-card-arrow">›</div>
+          </div>
+          <div class="coach-card" onclick="askCoach('form','Give me 5 key running form tips to improve efficiency and reduce injury risk for a runner doing 312km total')">
+            <div class="coach-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="6" r="2"/><path d="M20 9l-6.5 1.5L11 15l-4 5H4l4-6 2-3-3-1.5 2-4.5 4 1 2.5-2.5"/></svg></div>
+            <div class="coach-card-info"><div class="coach-card-title">Running Form</div><div class="coach-card-sub">Run more efficiently</div></div>
+            <div class="coach-card-arrow">›</div>
+          </div>
+          <div class="coach-card" onclick="askCoach('nutrition','Give me a race day nutrition and fueling strategy for a 10K runner at Pro level, including what to eat the night before, morning of, and during the race')">
+            <div class="coach-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+            <div class="coach-card-info"><div class="coach-card-title">Race Day Nutrition</div><div class="coach-card-sub">Fueling strategy for performance</div></div>
+            <div class="coach-card-arrow">›</div>
+          </div>
+          <div class="coach-card" onclick="askCoach('mental','Give me 5 mental training strategies and mantras for pushing through the hard miles in a race')">
+            <div class="coach-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
+            <div class="coach-card-info"><div class="coach-card-title">Mental Training</div><div class="coach-card-sub">Mindset for race day</div></div>
+            <div class="coach-card-arrow">›</div>
+          </div>
+          <div class="coach-card" onclick="askCoach('sleep','Explain how sleep affects running performance and give me a sleep optimization protocol for runners in training')">
+            <div class="coach-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
+            <div class="coach-card-info"><div class="coach-card-title">Sleep Optimization</div><div class="coach-card-sub">How sleep builds performance</div></div>
+            <div class="coach-card-arrow">›</div>
+          </div>
+
+          <div id="coach-response" style="display:none;margin-top:16px;background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);">
+            <div style="font-size:10px;letter-spacing:2px;color:var(--ink3);font-family:'JetBrains Mono',monospace;margin-bottom:10px;" id="coach-response-label">AI COACH</div>
+            <div id="coach-response-text" style="font-size:13px;line-height:1.7;color:var(--ink2);white-space:pre-line;"></div>
+          </div>
+        </div>
+
+        <!-- ── TRAINING PLAN ── -->
+        <div id="aview-plan" style="display:none;flex:1;overflow-y:auto;padding:16px;scrollbar-width:none;">
+          <div style="font-family:'DM Serif Display',serif;font-weight:700;font-size:20px;margin-bottom:2px;">Training Plan</div>
+          <div style="font-size:12px;color:var(--ink3);margin-bottom:14px;">AI-generated · Personalized for you</div>
+
+          <div style="background:var(--ink);border-radius:var(--r);padding:18px;margin-bottom:14px;color:var(--white);">
+            <div style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.65);font-family:'JetBrains Mono',monospace;margin-bottom:4px;">YOUR GOAL</div>
+            <div style="font-family:'DM Serif Display',serif;font-weight:700;font-size:20px;margin-bottom:2px;" id="plan-goal-label">Sub 45min 10K</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.65);margin-bottom:14px;font-weight:500;">Pro tier · 312km base · 14-day streak</div>
+            <button onclick="generatePlan()" style="width:100%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:10px;color:var(--white);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Generate My AI Training Plan</button>
+          </div>
+
+          <div style="font-size:10px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:8px;">Select Goal</div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">
+            <div class="goal-row" id="goal-5k" onclick="setGoal(this,'5K','Sub 25min 5K','5K')"><div class="goal-dist">5K</div><div class="goal-info"><div class="goal-name">5 Kilometers</div><div class="goal-sub">Beginner friendly</div></div><div class="goal-check" id="gc-5k" style="opacity:0;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+            <div class="goal-row active" id="goal-10k" onclick="setGoal(this,'10K','Sub 45min 10K','10K')"><div class="goal-dist">10K</div><div class="goal-info"><div class="goal-name">10 Kilometers</div><div class="goal-sub">Intermediate</div></div><div class="goal-check" id="gc-10k"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+            <div class="goal-row" id="goal-half" onclick="setGoal(this,'Half Marathon','Sub 1:45 Half Marathon','21K')"><div class="goal-dist">21K</div><div class="goal-info"><div class="goal-name">Half Marathon</div><div class="goal-sub">Advanced</div></div><div class="goal-check" id="gc-half" style="opacity:0;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+            <div class="goal-row" id="goal-full" onclick="setGoal(this,'Marathon','Sub 4:00 Marathon','42K')"><div class="goal-dist">42K</div><div class="goal-info"><div class="goal-name">Full Marathon</div><div class="goal-sub">Elite endurance</div></div><div class="goal-check" id="gc-full" style="opacity:0;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div></div>
+          </div>
+
+          <div id="plan-response" style="display:none;background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);">
+            <div style="font-size:10px;letter-spacing:2px;color:var(--ink3);font-family:'JetBrains Mono',monospace;margin-bottom:10px;">YOUR AI TRAINING PLAN</div>
+            <div id="plan-response-text" style="font-size:13px;line-height:1.7;color:var(--ink2);white-space:pre-line;"></div>
+          </div>
+        </div>
+
+        <!-- ── INJURY & RECOVERY ── -->
+        <div id="aview-injury" style="display:none;flex:1;overflow-y:auto;padding:16px;scrollbar-width:none;">
+          <div style="font-family:'DM Serif Display',serif;font-weight:700;font-size:20px;margin-bottom:2px;">Injury & Recovery</div>
+          <div style="font-size:12px;color:var(--ink3);margin-bottom:16px;">AI-powered guidance · Always consult a doctor for serious pain</div>
+
+          <div style="font-size:10px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:8px;">Common Injuries</div>
+
+          <div class="coach-card injury" onclick="askInjury('shin_splints','Explain shin splints for runners: causes, RICE treatment protocol, how long to rest, exercises to do during recovery, and a return-to-running plan')">
+            <div class="coach-card-icon injury-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+            <div class="coach-card-info"><div class="coach-card-title">Shin Splints</div><div class="coach-card-sub">Treatment & return-to-run plan</div></div>
+            <div class="coach-card-arrow">›</div>
+          </div>
+          <div class="coach-card injury" onclick="askInjury('runners_knee','Explain runner\'s knee (patellofemoral pain) and IT band syndrome: causes, treatment, strengthening exercises, and when it\'s safe to return to running')">
+            <div class="coach-card-icon injury-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+            <div class="coach-card-info"><div class="coach-card-title">Runner's Knee</div><div class="coach-card-sub">IT band & patella pain guide</div></div>
+            <div class="coach-card-arrow">›</div>
+          </div>
+          <div class="coach-card injury" onclick="askInjury('plantar','Explain plantar fasciitis for runners: what causes it, morning stretches, taping techniques, recommended footwear, and how long recovery takes')">
+            <div class="coach-card-icon injury-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+            <div class="coach-card-info"><div class="coach-card-title">Plantar Fasciitis</div><div class="coach-card-sub">Heel pain relief & prevention</div></div>
+            <div class="coach-card-arrow">›</div>
+          </div>
+          <div class="coach-card injury" onclick="askInjury('achilles','Explain achilles tendinitis for runners: causes, eccentric heel drop exercises, how to modify training, and a phased return-to-run protocol')">
+            <div class="coach-card-icon injury-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+            <div class="coach-card-info"><div class="coach-card-title">Achilles Tendon</div><div class="coach-card-sub">Tendinitis care & strengthening</div></div>
+            <div class="coach-card-arrow">›</div>
+          </div>
+          <div class="coach-card injury" onclick="askInjury('stress_fracture','Explain stress fractures in runners: warning signs, difference from normal soreness, how long to rest, and cross-training alternatives during recovery')">
+            <div class="coach-card-icon injury-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+            <div class="coach-card-info"><div class="coach-card-title">Stress Fractures</div><div class="coach-card-sub">Signs, rest & safe return</div></div>
+            <div class="coach-card-arrow">›</div>
+          </div>
+          <div class="coach-card injury" onclick="askInjury('overtraining','Explain overtraining syndrome in runners: symptoms, how to distinguish it from normal fatigue, and a structured recovery plan to get back to peak performance')">
+            <div class="coach-card-icon injury-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+            <div class="coach-card-info"><div class="coach-card-title">Overtraining</div><div class="coach-card-sub">Signs & recovery protocol</div></div>
+            <div class="coach-card-arrow">›</div>
+          </div>
+
+          <div style="font-size:10px;letter-spacing:2px;color:var(--ink3);text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin:20px 0 8px;">Recovery Tools</div>
+
+          <div class="coach-card" onclick="askInjury('foam_roll','Give me a complete post-run foam rolling routine for runners: which muscles to target, how long to spend on each area, and technique tips. Format it as a step-by-step routine.')">
+            <div class="coach-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3h-8"/><path d="M12 3v4"/></svg></div>
+            <div class="coach-card-info"><div class="coach-card-title">Foam Roll Routine</div><div class="coach-card-sub">Full body post-run protocol</div></div>
+            <div class="coach-card-arrow">›</div>
+          </div>
+          <div class="coach-card" onclick="askInjury('stretching','Give me a complete post-run static stretching routine for runners. Include holds, reps, and which muscle groups to prioritize after easy vs hard runs.')">
+            <div class="coach-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+            <div class="coach-card-info"><div class="coach-card-title">Stretching Routine</div><div class="coach-card-sub">Static stretches for recovery</div></div>
+            <div class="coach-card-arrow">›</div>
+          </div>
+          <div class="coach-card" onclick="askInjury('ice_heat','Explain when runners should use ice vs heat for injuries and soreness. Give specific examples for common running injuries and how long to apply each.')">
+            <div class="coach-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg></div>
+            <div class="coach-card-info"><div class="coach-card-title">Ice vs Heat</div><div class="coach-card-sub">When to use each for recovery</div></div>
+            <div class="coach-card-arrow">›</div>
+          </div>
+          <div class="coach-card" onclick="askInjury('cross_training','What are the best cross-training activities for injured runners to maintain fitness? Include swimming, cycling, and other options with how to structure each.')">
+            <div class="coach-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
+            <div class="coach-card-info"><div class="coach-card-title">Cross Training</div><div class="coach-card-sub">Stay fit while injured</div></div>
+            <div class="coach-card-arrow">›</div>
+          </div>
+
+          <div id="injury-response" style="display:none;margin-top:16px;background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow);">
+            <div style="font-size:10px;letter-spacing:2px;color:var(--ink3);font-family:'JetBrains Mono',monospace;margin-bottom:4px;">STRIDE AI COACH</div>
+            <div style="font-size:10px;color:#e8321a;margin-bottom:10px;">Always consult a medical professional for serious or persistent pain.</div>
+            <div id="injury-response-text" style="font-size:13px;line-height:1.7;color:var(--ink2);white-space:pre-line;"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ PROFILE ══ -->
+    <div id="panel-profile" class="panel">
+      <div style="padding-bottom:100px;">
+        <div class="profile-hero">
+          <div class="ph-noise"></div>
+          <div class="ph-top">
+            <div class="ph-avatar" onclick="showToast('Change photo coming soon')" style="font-size:13px;font-weight:700;letter-spacing:1px;">JF</div>
+            <button class="ph-edit-btn" onclick="openEditProfile()">Edit Profile</button>
+          </div>
+          <div class="ph-name" id="phName">Jose Fernandez</div>
+          <div class="ph-handle" id="phHandle">@josefcoluna · Santa Clarita, CA</div>
+          <div class="ph-stats">
+            <div class="ph-stat"><div class="ph-val">47</div><div class="ph-lbl">Runs</div></div>
+            <div class="ph-stat"><div class="ph-val">312km</div><div class="ph-lbl">Total</div></div>
+            <div class="ph-stat"><div class="ph-val">Lv 12</div><div class="ph-lbl">Level</div></div>
+          </div>
+        </div>
+
+        <div class="profile-section" style="margin-top:20px;">
+          <div class="ps-title">Personal</div>
+          <div class="ps-row" onclick="showToast('Edit name')"><div class="ps-left"><div class="ps-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="ps-label">Full Name</div></div><div class="ps-val" id="psName">Jose Fernandez</div><div class="ps-arrow">›</div></div>
+          <div class="ps-row" onclick="showToast('Edit goal')"><div class="ps-left"><div class="ps-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><div class="ps-label">Weekly Goal</div></div><div class="ps-val">70 km</div><div class="ps-arrow">›</div></div>
+          <div class="ps-row" onclick="showToast('Edit pace')"><div class="ps-left"><div class="ps-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div><div class="ps-label">Target Pace</div></div><div class="ps-val">4:45 /km</div><div class="ps-arrow">›</div></div>
+          <div class="ps-row" onclick="showToast('Edit shoe')"><div class="ps-left"><div class="ps-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg></div><div class="ps-label">Current Shoe</div></div><div class="ps-val">Nike Vaporfly</div><div class="ps-arrow">›</div></div>
+        </div>
+
+        <div class="profile-section" style="margin-top:4px;">
+          <div class="ps-title">Subscription</div>
+          <div id="pro-profile-row" class="ps-row" onclick="openPaywall()" style="background:linear-gradient(135deg,rgba(201,146,42,0.06),rgba(240,192,96,0.04));border-color:rgba(201,146,42,0.25);">
+            <div class="ps-left">
+              <div class="ps-icon" style="color:#c9922a;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </div>
+              <div class="ps-label">Stride Pro</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div id="pro-status-val" class="ps-val">Free plan</div>
+              <div class="ps-arrow">›</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-section" style="margin-top:4px;">
+          <div class="ps-title">Integrations</div>
+          <div class="ps-row" onclick="showToast('Strava connected')"><div class="ps-left"><div class="ps-icon" style="color:#fc4c02;font-weight:700;font-size:12px;">STR</div><div class="ps-label">Strava</div></div><div class="ps-val" style="color:var(--green)">Connected</div><div class="ps-arrow">›</div></div>
+          <div class="ps-row" onclick="showToast('Gmail connected')"><div class="ps-left"><div class="ps-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div><div class="ps-label">Gmail</div></div><div class="ps-val" style="color:var(--green)">Connected</div><div class="ps-arrow">›</div></div>
+          <div class="ps-row" onclick="showToast('Calendar connected')"><div class="ps-left"><div class="ps-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="ps-label">Calendar</div></div><div class="ps-val" style="color:var(--green)">Connected</div><div class="ps-arrow">›</div></div>
+        </div>
+
+        <div class="profile-section" style="margin-top:4px; margin-bottom:20px;">
+          <div class="ps-title">App</div>
+          <div class="ps-row" onclick="showToast('Notifications settings')"><div class="ps-left"><div class="ps-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div><div class="ps-label">Notifications</div></div><div class="ps-val">On</div><div class="ps-arrow">›</div></div>
+          <div class="ps-row" onclick="showToast('Dark mode coming soon')"><div class="ps-left"><div class="ps-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div><div class="ps-label">Dark Mode</div></div><div class="ps-val">Off</div><div class="ps-arrow">›</div></div>
+
+          <!-- FONT PICKER -->
+          <div style="background:var(--white);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px 16px;margin-top:6px;box-shadow:var(--shadow);">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+              <div class="ps-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg></div>
+              <div style="font-weight:600;font-size:14px;">Typography</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;" id="font-options">
+
+              <div class="font-option" id="font-opt-playfair" onclick="setFont('playfair')">
+                <div class="font-preview" style="font-family:'DM Serif Display',serif;">Stride — Run Further</div>
+                <div class="font-meta">
+                  <div class="font-name">Playfair Display</div>
+                  <div class="font-desc">Editorial · Classic</div>
+                </div>
+                <div class="font-check" id="fc-playfair" style="opacity:0;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+              </div>
+
+              <div class="font-option" id="font-opt-barlow" onclick="setFont('barlow')">
+                <div class="font-preview" style="font-family:'Barlow',sans-serif;font-weight:600;">Stride — Run Further</div>
+                <div class="font-meta">
+                  <div class="font-name">Barlow</div>
+                  <div class="font-desc">Modern · Athletic</div>
+                </div>
+                <div class="font-check" id="fc-barlow" style="opacity:0;"></div>
+              </div>
+
+              <div class="font-option active" id="font-opt-dm" onclick="setFont('dm')">
+                <div class="font-preview" style="font-family:'DM Serif Display',serif;">Stride — Run Further</div>
+                <div class="font-meta">
+                  <div class="font-name">DM Serif</div>
+                  <div class="font-desc">Refined · Elegant</div>
+                </div>
+                <div class="font-check" id="fc-dm">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /panels -->
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <button class="nav-btn on" id="nav-home" onclick="switchPanel('home')">
+      <div class="nav-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+      <div class="nav-lbl">Home</div>
+    </button>
+    <button class="nav-btn" id="nav-runs" onclick="switchPanel('runs')">
+      <div class="nav-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="6" r="2"/><path d="M20 9l-6.5 1.5L11 15l-4 5H4l4-6 2-3-3-1.5 2-4.5 4 1 2.5-2.5"/></svg></div>
+      <div class="nav-lbl">Runs</div>
+    </button>
+    <button class="nav-btn" id="nav-progress" onclick="switchPanel('progress')">
+      <div class="nav-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+      <div class="nav-lbl">Level</div>
+    </button>
+    <button class="nav-btn" id="nav-store" onclick="switchPanel('store')">
+      <div class="nav-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg></div>
+      <div class="nav-lbl">Store</div>
+    </button>
+    <button class="nav-btn" id="nav-agent" onclick="switchPanel('agent')">
+      <div class="nav-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+      <div class="nav-lbl">Agent</div>
+    </button>
+  </div>
+
+</div><!-- /shell -->
+
+<!-- ONBOARDING SCREEN -->
+<div id="onboarding" style="position:fixed;inset:0;z-index:900;background:var(--ink);display:flex;flex-direction:column;max-width:430px;margin:0 auto;">
+
+  <!-- Step indicators -->
+  <div style="display:flex;gap:6px;padding:60px 24px 0;justify-content:center;">
+    <div class="ob-step active" id="step-dot-1"></div>
+    <div class="ob-step" id="step-dot-2"></div>
+    <div class="ob-step" id="step-dot-3"></div>
+  </div>
+
+  <!-- Step 1 — Welcome -->
+  <div id="ob-step-1" style="flex:1;display:flex;flex-direction:column;padding:40px 24px 40px;">
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
+      <div style="font-family:'DM Serif Display',serif;font-weight:900;font-size:64px;color:white;letter-spacing:-2px;line-height:1;margin-bottom:8px;">Stride</div>
+      <div style="font-size:12px;letter-spacing:5px;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:48px;">Every stride counts</div>
+      <div style="width:80px;height:1px;background:rgba(255,255,255,0.15);margin-bottom:48px;"></div>
+      <div style="font-family:'DM Serif Display',serif;font-size:28px;font-weight:700;color:white;line-height:1.2;margin-bottom:16px;letter-spacing:-0.5px;">Run. Earn.<br>Reach Legend.</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.7;max-width:300px;">Track your runs, earn Stride Coins, unlock rewards from Nike, Oakley and more — coached by Claude AI.</div>
+    </div>
+    <button onclick="goStep(2)" style="width:100%;padding:16px;border-radius:20px;background:white;border:none;font-family:'DM Serif Display',serif;font-weight:700;font-size:18px;color:var(--ink);cursor:pointer;letter-spacing:-0.3px;">Get Started</button>
+    <button onclick="skipOnboarding()" style="width:100%;padding:12px;background:transparent;border:none;color:rgba(255,255,255,0.35);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:4px;">I already have an account</button>
+  </div>
+
+  <!-- Step 2 — Strava Connect -->
+  <div id="ob-step-2" style="flex:1;display:none;flex-direction:column;padding:40px 24px 40px;">
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+      <div style="font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.4);text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:16px;">Step 1 of 2</div>
+      <div style="font-family:'DM Serif Display',serif;font-weight:900;font-size:32px;color:white;letter-spacing:-0.5px;line-height:1.1;margin-bottom:12px;">Connect<br>Strava</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.7;margin-bottom:32px;">Stride syncs with Strava to log your runs automatically and calculate your Stride Coins.</div>
+
+      <!-- Important notice -->
+      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:18px;margin-bottom:32px;">
+        <div style="font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.4);font-family:'JetBrains Mono',monospace;margin-bottom:10px;">IMPORTANT</div>
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+          <div style="width:6px;height:6px;border-radius:50%;background:#c9922a;flex-shrink:0;margin-top:6px;"></div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;">Your Stride journey <strong style="color:white;">starts today</strong> — only runs from this day forward count toward your tier and Stride Coins.</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+          <div style="width:6px;height:6px;border-radius:50%;background:#c9922a;flex-shrink:0;margin-top:6px;"></div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;">Past Strava activities <strong style="color:white;">will not transfer</strong> — everyone starts at Rookie tier equally.</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <div style="width:6px;height:6px;border-radius:50%;background:#1a7a4a;flex-shrink:0;margin-top:6px;"></div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.8);line-height:1.6;">Your past pace and distance <strong style="color:white;">helps calibrate</strong> your AI Coach training plans.</div>
+        </div>
+      </div>
+
+      <!-- Strava connect button -->
+      <button onclick="connectStrava()" style="width:100%;padding:16px;border-radius:20px;background:#fc4c02;border:none;font-family:'DM Sans',sans-serif;font-weight:700;font-size:16px;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+        Connect with Strava
+      </button>
+      <button onclick="skipStrava()" style="width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:20px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Skip for now — log runs manually</button>
+    </div>
+  </div>
+
+  <!-- Step 3 — All set -->
+  <div id="ob-step-3" style="flex:1;display:none;flex-direction:column;padding:40px 24px 40px;">
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
+      <div style="width:72px;height:72px;border-radius:24px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;margin-bottom:24px;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div style="font-family:'DM Serif Display',serif;font-weight:900;font-size:32px;color:white;letter-spacing:-0.5px;margin-bottom:12px;">You're all set,<br id="ob-name-line">Runner.</div>
+      <div style="font-size:14px;color:rgba(255,255,255,0.55);line-height:1.7;margin-bottom:40px;max-width:300px;">Your Stride journey starts now. Every kilometer from today earns Stride Coins and moves you toward Legend.</div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;width:100%;margin-bottom:40px;">
+        <div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.05);border-radius:14px;padding:14px 16px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(201,146,42,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9922a" stroke-width="2"><circle cx="13" cy="6" r="2"/><path d="M20 9l-6.5 1.5L11 15l-4 5H4l4-6 2-3-3-1.5 2-4.5 4 1 2.5-2.5"/></svg>
+          </div>
+          <div style="text-align:left;"><div style="font-size:13px;font-weight:600;color:white;">Rookie Tier</div><div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:1px;">Starting today — 0 km</div></div>
+          <div style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:#c9922a;">0 SC</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.05);border-radius:14px;padding:14px 16px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(0,229,160,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00e5a0" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <div style="text-align:left;"><div style="font-size:13px;font-weight:600;color:white;">Claude AI Coach</div><div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:1px;">5 free messages/month</div></div>
+          <div style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:#00e5a0;">FREE</div>
+        </div>
+      </div>
+    </div>
+    <button onclick="finishOnboarding()" style="width:100%;padding:16px;border-radius:20px;background:white;border:none;font-family:'DM Serif Display',serif;font-weight:700;font-size:18px;color:var(--ink);cursor:pointer;letter-spacing:-0.3px;">Start Running</button>
+  </div>
+
+</div>
+
+
+<div class="paywall-overlay" id="paywallModal" onclick="closePaywall(event)">
+  <div class="paywall-sheet">
+    <div class="paywall-handle"></div>
+    <div class="paywall-crown">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    </div>
+    <div class="paywall-title">Stride Pro</div>
+    <div class="paywall-sub">Unlock your full potential with unlimited AI coaching, exclusive rewards, and premium features.</div>
+
+    <div class="paywall-features">
+      <div class="paywall-feat">
+        <div class="paywall-feat-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+        <div class="paywall-feat-text"><div class="paywall-feat-title">Unlimited AI Coach</div><div class="paywall-feat-sub">Chat, training plans, injury help — no limits</div></div>
+      </div>
+      <div class="paywall-feat">
+        <div class="paywall-feat-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="paywall-feat-text"><div class="paywall-feat-title">Weekly AI Training Plans</div><div class="paywall-feat-sub">Personalized & auto-updated every week</div></div>
+      </div>
+      <div class="paywall-feat">
+        <div class="paywall-feat-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div class="paywall-feat-text"><div class="paywall-feat-title">2x Stride Coins</div><div class="paywall-feat-sub">Double coins on every run — faster rewards</div></div>
+      </div>
+      <div class="paywall-feat">
+        <div class="paywall-feat-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></div>
+        <div class="paywall-feat-text"><div class="paywall-feat-title">Exclusive Pro Rewards</div><div class="paywall-feat-sub">Nike, Oakley & more — Pro-only deals</div></div>
+      </div>
+    </div>
+
+    <div class="paywall-price">
+      <div class="paywall-amount">$4.99</div>
+      <div class="paywall-period">per month · Cancel anytime</div>
+    </div>
+
+    <button class="paywall-btn" onclick="subscribePro()">Start Stride Pro</button>
+    <button class="paywall-dismiss" onclick="closePaywall()">Maybe later</button>
+  </div>
+</div>
+
+<!-- LOG RUN MODAL -->
+<div class="overlay" id="modal" onclick="closeModal(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Log New Run</div>
+    <label class="flabel">Run Name</label>
+    <input class="finput" id="rName" placeholder="e.g. Morning easy run">
+    <div class="frow">
+      <div><label class="flabel">Distance</label><input class="finput" type="number" id="rDist" placeholder="km"></div>
+      <div><label class="flabel">Time</label><input class="finput" id="rTime" placeholder="45:00"></div>
+      <div><label class="flabel">Avg BPM</label><input class="finput" type="number" id="rBpm" placeholder="145"></div>
+    </div>
+    <button class="primary" onclick="submitRun()">Add Run & Earn XP</button>
+  </div>
+</div>
+
+<!-- EDIT PROFILE MODAL -->
+<div class="edit-overlay" id="editModal" onclick="closeEdit(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Edit Profile</div>
+    <label class="flabel">Full Name</label>
+    <input class="finput" id="eName" value="Jose Fernandez">
+    <label class="flabel">Handle</label>
+    <input class="finput" id="eHandle" value="@josefcoluna">
+    <label class="flabel">City</label>
+    <input class="finput" id="eCity" value="Santa Clarita, CA">
+    <button class="primary" onclick="saveProfile()">Save Profile</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toastEl"></div>
+
+<script>
+// ─── SPLASH ───
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('splash').classList.add('out');
+    document.getElementById('shell').classList.add('ready');
+    setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 600);
+  }, 2200);
+});
+
+// ─── WEEKLY CHART ───
+const days = ['M','T','W','T','F','S','S'];
+const kms  = [8.5, 0, 12.3, 7.0, 10.2, 8, 15];
+const maxKm = Math.max(...kms);
+const chart = document.getElementById('barChart');
+const daysEl = document.getElementById('barDays');
+days.forEach((d, i) => {
+  const pct = kms[i] / maxKm * 100;
+  const isToday = i === 6;
+  const col = document.createElement('div');
+  col.className = 'bar-col' + (isToday ? ' today' : '');
+  col.innerHTML = `
+    <div class="bar-km">${kms[i] > 0 ? kms[i] : ''}</div>
+    <div class="bar-fill${isToday ? ' today' : kms[i] === maxKm ? ' best' : ''}"
+      style="height:${pct}%; animation: barIn 0.6s cubic-bezier(0.4,0,0.2,1) ${i*0.08+1.8}s both;"
+    ></div>`;
+  chart.appendChild(col);
+
+  const dayCol = document.createElement('div');
+  dayCol.className = 'bar-col' + (isToday ? ' today' : '');
+  dayCol.innerHTML = `<div class="bar-day">${d}</div>`;
+  daysEl.appendChild(dayCol);
+});
+
+// bar animation keyframes
+const style = document.createElement('style');
+style.textContent = `@keyframes barIn { from { height: 0 !important; } }`;
+document.head.appendChild(style);
+
+// ─── PANEL SWITCH ───
+function switchPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
+  const p = document.getElementById('panel-' + id);
+  if (p) p.classList.add('active');
+  const n = document.getElementById('nav-' + id);
+  if (n) n.classList.add('on');
+}
+
+// ─── LEADERBOARD ───
+function lbPill(el) {
+  document.querySelectorAll('.lb-pill').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+}
+
+// ─── TOAST ───
+let tTimer;
+function showToast(msg) {
+  const el = document.getElementById('toastEl');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(tTimer);
+  tTimer = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+// ─── TASKS ───
+function checkTask(el) {
+  el.classList.toggle('done');
+  const c = el.querySelector('.task-circle');
+  c.textContent = el.classList.contains('done') ? '' : '';
+  if (el.classList.contains('done')) showToast('Done · +10 XP');
+}
+function addTask() {
+  const f = document.getElementById('taskInput');
+  const v = f.value.trim(); if (!v) return;
+  const list = document.getElementById('taskList');
+  const d = document.createElement('div');
+  d.className = 'task-row'; d.onclick = function() { checkTask(this); };
+  d.innerHTML = `<div class="task-circle"></div><div class="task-txt">${v}</div><div class="ttag t-run">New</div>`;
+  list.prepend(d); f.value = '';
+  showToast('Added to today');
+}
+
+// ─── MODAL ───
+function openModal() { document.getElementById('modal').classList.add('open'); }
+function closeModal(e) { if (e.target === document.getElementById('modal')) document.getElementById('modal').classList.remove('open'); }
+
+// ─── PROFILE ───
+function openEditProfile() { document.getElementById('editModal').classList.add('open'); }
+function closeEdit(e) { if (e.target === document.getElementById('editModal')) document.getElementById('editModal').classList.remove('open'); }
+function saveProfile() {
+  const name = document.getElementById('eName').value;
+  const handle = document.getElementById('eHandle').value;
+  const city = document.getElementById('eCity').value;
+  document.getElementById('phName').textContent = name;
+  document.getElementById('phHandle').textContent = handle + ' · ' + city;
+  document.getElementById('psName').textContent = name;
+  document.getElementById('editModal').classList.remove('open');
+  showToast('Profile updated');
+}
+
+// ─── TIER & COINS SYSTEM ───
+const TIERS = [
+  { name: 'Rookie',  min: 0,   max: 50,  coinMult: 1.0 },
+  { name: 'Amateur', min: 50,  max: 150, coinMult: 1.2 },
+  { name: 'Pro',     min: 150, max: 300, coinMult: 1.5 },
+  { name: 'Elite',   min: 300, max: 500, coinMult: 1.8 },
+  { name: 'Legend',  min: 500, max: 9999,coinMult: 2.0 },
+];
+
+let state = { totalKm: 312, coins: 1240, runs: 47 };
+
+function getTier(km) {
+  return TIERS.find(t => km >= t.min && km < t.max) || TIERS[TIERS.length - 1];
+}
+function tierIndex(name) { return TIERS.findIndex(t => t.name === name); }
+
+function renderTierCards() {
+  const container = document.getElementById('tier-cards');
+  if (!container) return;
+  container.innerHTML = '';
+  const current = getTier(state.totalKm);
+  TIERS.forEach((t, i) => {
+    const isCurrent = t.name === current.name;
+    const isDone = state.totalKm >= t.max;
+    const isNext = !isDone && !isCurrent && tierIndex(t.name) === tierIndex(current.name) + 1;
+    const isLocked = !isDone && !isCurrent && !isNext;
+    let pct = isDone ? 100 : isCurrent ? Math.round(((state.totalKm - t.min) / (t.max - t.min)) * 100) : 0;
+    const range = t.name === 'Legend' ? '500+ km' : t.min + ' – ' + t.max + ' km';
+    const bonus = Math.round(t.coinMult * 10) + ' SC/km · ' + t.coinMult + 'x multiplier';
+    let badgeHtml = isCurrent ? '<div class="tier-badge badge-current">CURRENT</div>'
+      : isDone ? '<div class="tier-badge badge-done">COMPLETED</div>'
+      : isNext ? '<div class="tier-badge badge-next">NEXT</div>'
+      : '<div class="tier-badge badge-locked">LOCKED</div>';
+    const card = document.createElement('div');
+    card.className = 'tier-card' + (isCurrent ? ' current' : '') + (isLocked ? ' locked' : '');
+    const kmInfo = isCurrent ? ((state.totalKm - t.min) + ' / ' + (t.max - t.min) + ' km · ') : '';
+    card.innerHTML = badgeHtml +
+      '<div class="tier-top"><div class="tier-name">' + t.name + '</div><div class="tier-range">' + range + '</div></div>' +
+      '<div class="tier-bar-track"><div class="tier-bar-fill" style="width:0%" data-pct="' + pct + '"></div></div>' +
+      '<div class="tier-bonus">' + kmInfo + bonus + '</div>';
+    container.appendChild(card);
+    setTimeout(function() {
+      var fill = card.querySelector('.tier-bar-fill');
+      if (fill) fill.style.width = pct + '%';
+    }, 100 + i * 80);
+  });
+}
+
+function updateHomeCard() {
+  const tier = getTier(state.totalKm);
+  const nextIdx = tierIndex(tier.name) + 1;
+  const next = nextIdx < TIERS.length ? TIERS[nextIdx] : null;
+  var el;
+  el = document.getElementById('lc-tier-label'); if (el) el.textContent = tier.name + ' · ' + state.totalKm + ' km total';
+  el = document.getElementById('lc-num');        if (el) el.textContent = tier.name.slice(0,3).toUpperCase();
+  el = document.getElementById('lcs-km');        if (el) el.textContent = state.totalKm;
+  el = document.getElementById('lcs-runs');      if (el) el.textContent = state.runs;
+  el = document.getElementById('lcs-coins');     if (el) el.textContent = state.coins.toLocaleString();
+  el = document.getElementById('wallet-coins');  if (el) el.textContent = state.coins.toLocaleString();
+  el = document.getElementById('store-balance'); if (el) el.textContent = state.coins.toLocaleString() + ' SC';
+  var fillBar = document.getElementById('lc-fill-bar');
+  var progLabel = document.getElementById('lc-prog-label');
+  var progVal = document.getElementById('lc-prog-val');
+  if (next) {
+    var pct = Math.min(100, ((state.totalKm - tier.min) / (next.min - tier.min)) * 100);
+    if (progLabel) progLabel.textContent = 'km to ' + next.name;
+    if (progVal) progVal.innerHTML = state.totalKm + ' <span style="color:rgba(255,255,255,0.35)">/ ' + next.min + ' to ' + next.name + '</span>';
+    if (fillBar) { fillBar.style.width = '0%'; setTimeout(function(){ fillBar.style.width = pct + '%'; }, 300); }
+  } else {
+    if (progLabel) progLabel.textContent = 'Legend tier reached';
+    if (progVal) progVal.textContent = state.totalKm + ' km total';
+    if (fillBar) fillBar.style.width = '100%';
+  }
+}
+
+// ─── STORE ───
+const STORE_ITEMS = [
+  { id:1, brand:'App Store',   logo:'Apple', logoClass:'logo-apple',  name:'$5 Gift Card',  desc:'Apple App Store credit',  cost:500,  category:'apple',  tierReq:'Rookie'  },
+  { id:2, brand:'Google Play', logo:'Play',  logoClass:'logo-google', name:'$5 Gift Card',  desc:'Google Play credit',       cost:500,  category:'google', tierReq:'Rookie'  },
+  { id:3, brand:'App Store',   logo:'Apple', logoClass:'logo-apple',  name:'$10 Gift Card', desc:'Apple App Store credit',  cost:900,  category:'apple',  tierReq:'Amateur' },
+  { id:4, brand:'Google Play', logo:'Play',  logoClass:'logo-google', name:'$10 Gift Card', desc:'Google Play credit',       cost:900,  category:'google', tierReq:'Amateur' },
+  { id:5, brand:'Nike',        logo:'Nike',  logoClass:'logo-nike',   name:'15% Off',       desc:'Nike.com discount code',  cost:600,  category:'gear',   tierReq:'Pro'     },
+  { id:6, brand:'Adidas',      logo:'ADS',   logoClass:'logo-adidas', name:'20% Off',       desc:'Adidas Running gear',      cost:800,  category:'gear',   tierReq:'Pro'     },
+  { id:7, brand:'App Store',   logo:'Apple', logoClass:'logo-apple',  name:'$25 Gift Card', desc:'Apple App Store credit',  cost:2000, category:'apple',  tierReq:'Elite'   },
+  { id:8, brand:'Nike',        logo:'Nike',  logoClass:'logo-nike',   name:'30% Off',       desc:'Nike Running shoes',       cost:1500, category:'gear',   tierReq:'Elite'   },
+];
+
+var currentFilter = 'all';
+
+function renderStore(filter) {
+  if (filter !== undefined) currentFilter = filter;
+  var grid = document.getElementById('store-grid');
+  if (!grid) return;
+  var currentTierIdx = tierIndex(getTier(state.totalKm).name);
+  var filtered = STORE_ITEMS.filter(function(item) { return currentFilter === 'all' || item.category === currentFilter; });
+  var html = '<div class="store-grid">';
+  filtered.forEach(function(item) {
+    var canAfford = state.coins >= item.cost;
+    var tierOk = tierIndex(item.tierReq) <= currentTierIdx;
+    var locked = !tierOk;
+    var btnLabel = locked ? (item.tierReq + ' req.') : (canAfford ? 'Redeem' : 'Need more');
+    var btnClass = 'store-btn' + (locked ? ' locked-btn' : '');
+    var btnOnclick = locked
+      ? 'showToast(&quot;Reach ' + item.tierReq + ' tier to unlock&quot;)'
+      : 'redeemItem(' + item.id + ',' + item.cost + ',&quot;' + item.name + '&quot;)';
+    html += '<div class="store-card' + (locked ? ' locked-item' : '') + '">' +
+      '<div class="store-brand">' + item.brand + '</div>' +
+      '<div class="store-logo ' + item.logoClass + '">' + item.logo + '</div>' +
+      '<div><div class="store-name">' + item.name + '</div><div class="store-desc">' + item.desc + '</div></div>' +
+      '<div class="store-price">' +
+        '<div class="store-coins">' + item.cost.toLocaleString() + ' SC</div>' +
+        '<button class="' + btnClass + '" onclick="' + btnOnclick + '">' + btnLabel + '</button>' +
+      '</div>' +
+      (locked ? '<div class="tier-req">Requires ' + item.tierReq + '</div>' : '') +
+      '</div>';
+  });
+  html += '</div>';
+  grid.innerHTML = html;
+}
+
+function filterStore(el, cat) {
+  document.querySelectorAll('#panel-store .lb-pill').forEach(function(p) { p.classList.remove('on'); });
+  el.classList.add('on');
+  renderStore(cat);
+}
+
+function redeemItem(id, cost, name) {
+  if (state.coins < cost) { showToast('Not enough Stride Coins'); return; }
+  state.coins -= cost;
+  updateHomeCard();
+  renderStore();
+  showToast('Redeemed: ' + name + ' — check your email');
+}
+
+// ─── SUBMIT RUN (single, unified) ───
+function submitRun() {
+  var d = parseFloat(document.getElementById('rDist').value) || 5;
+  var tier = getTier(state.totalKm);
+  var coinsEarned = Math.round(d * 10 * tier.coinMult);
+  var prevTierName = tier.name;
+  state.totalKm += d;
+  state.coins += coinsEarned;
+  state.runs++;
+  var newTierName = getTier(state.totalKm).name;
+  document.getElementById('modal').classList.remove('open');
+  updateHomeCard();
+  renderTierCards();
+  renderStore();
+  showToast('Run logged · +' + coinsEarned + ' Stride Coins');
+  if (newTierName !== prevTierName) {
+    setTimeout(function(){ showToast('Tier up! Welcome to ' + newTierName); }, 1500);
+  }
+  setTimeout(function(){ showToast('Syncing to Strava…'); }, newTierName !== prevTierName ? 3200 : 1800);
+  ['rName','rDist','rTime','rBpm'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+}
+
+// ─── MIC ───
+var micOn = false;
+function toggleMic() {
+  micOn = !micOn;
+  var b = document.getElementById('micBtn');
+  b.classList.toggle('on', micOn);
+  b.innerHTML = micOn
+    ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';
+  if (micOn) {
+    showToast('Listening…');
+    setTimeout(function(){ micOn=false; b.classList.remove('on'); b.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>'; }, 3000);
+  }
+}
+
+// ─── INIT (moved to end of file) ───
+// updateHomeCard(); renderTierCards(); renderStore('all'); updateMsgCounter();
+
+// ─── CHAT ───
+const replies = {
+  'log a run': 'Head to Runs and tap Log New Run — or tell me your distance and time and I\'ll add it for you.',
+  'check my email': 'Checking Gmail… You have 3 unread: a race confirmation, a message from your coach, and a sponsor offer. Want me to open any?',
+  'add reminder': 'What do you want to be reminded about, and when? Say something like: "Remind me to stretch at 8pm tonight."',
+  'my schedule': 'Today: rest and prep race kit. Tomorrow: Santa Clarita Trail Race at 9am. Saturday: 1-hour run at 6am. You\'re all set.',
+  'my stats': 'This week: 61km · Best pace 4:52/km · 14-day streak · You\'re #4 in Santa Clarita. 7km from #3.',
+  'strava sync': 'Syncing Strava… 2 new activities found: Morning Run 6km + Trail 8km. +380 XP added. 68% to Level 13.',
+};
+function getReply(msg) {
+  const lc = msg.toLowerCase();
+  for (const k of Object.keys(replies)) if (lc.includes(k)) return replies[k];
+  return "Processing your request. Anything else I can help with?";
+}
+function addMsg(text, role) {
+  var body = document.getElementById('chatBody');
+  var ts = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  var div = document.createElement('div');
+  div.className = 'chat-msg ' + role;
+  if (role === 'bot') div.innerHTML = '<div class="msg-from">Stride · Claude AI</div><div class="bubble">' + text + '</div><div class="msg-ts">' + ts + '</div>';
+  else div.innerHTML = '<div class="bubble">' + text + '</div><div class="msg-ts">' + ts + '</div>';
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+function qSend(msg) {
+  switchPanel('agent');
+  setAgentTab('chat');
+  setTimeout(function() { document.getElementById('chatField').value = msg; send(); }, 120);
+}
+function onKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }
+function grow(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 90) + 'px'; }
+
+
+// ─── LEADERBOARD ───
+function switchLb(tab) {
+  var friends = document.getElementById('lb-friends-view');
+  var global = document.getElementById('lb-global-view');
+  var btnF = document.getElementById('lbt-friends');
+  var btnG = document.getElementById('lbt-global');
+  if (tab === 'friends') {
+    friends.style.display = 'block';
+    global.style.display = 'none';
+    btnF.classList.add('active');
+    btnG.classList.remove('active');
+  } else {
+    friends.style.display = 'none';
+    global.style.display = 'block';
+    btnF.classList.remove('active');
+    btnG.classList.add('active');
+  }
+}
+
+function friendsPill(el, type) {
+  document.querySelectorAll('#lb-friends-view .lb-pill').forEach(function(p){ p.classList.remove('on'); });
+  el.classList.add('on');
+}
+
+function openInviteModal() {
+  document.getElementById('inviteModal').classList.add('open');
+}
+function closeInvite(e) {
+  if (e.target === document.getElementById('inviteModal')) {
+    document.getElementById('inviteModal').classList.remove('open');
+  }
+}
+function copyInvite() {
+  showToast('Invite link copied');
+  document.getElementById('inviteModal').classList.remove('open');
+}
+function shareInvite() {
+  showToast('Sharing invite link…');
+  document.getElementById('inviteModal').classList.remove('open');
+}
+function giftCoins() {
+  var friend = document.getElementById('gift-friend').value;
+  var amount = parseInt(document.getElementById('gift-amount').value) || 0;
+  if (friend === 'Select friend…') { showToast('Select a friend first'); return; }
+  if (amount <= 0) { showToast('Enter an amount to send'); return; }
+  if (amount > state.coins) { showToast('Not enough Stride Coins'); return; }
+  state.coins -= amount;
+  updateHomeCard();
+  showToast(amount + ' SC sent to ' + friend);
+  document.getElementById('gift-amount').value = '';
+}
+
+// ─── ONBOARDING ───
+var stravaConnected = false;
+
+function goStep(n) {
+  [1,2,3].forEach(function(i) {
+    var step = document.getElementById('ob-step-' + i);
+    var dot = document.getElementById('step-dot-' + i);
+    if (step) step.style.display = i === n ? 'flex' : 'none';
+    if (dot) dot.classList.toggle('active', i === n);
+  });
+}
+
+function connectStrava() {
+  stravaConnected = true;
+  showOnboardingToast('Strava connected — journey starts today');
+  setTimeout(function() { goStep(3); }, 1000);
+}
+
+function skipStrava() {
+  goStep(3);
+}
+
+function finishOnboarding() {
+  var ob = document.getElementById('onboarding');
+  ob.style.opacity = '1';
+  ob.style.transition = 'opacity 0.5s';
+  ob.style.opacity = '0';
+  setTimeout(function() {
+    ob.style.display = 'none';
+    // Reset state to Rookie since journey starts today
+    state.totalKm = 0;
+    state.coins = 0;
+    state.runs = 0;
+    updateHomeCard();
+    renderTierCards();
+    renderStore('all');
+    updateMsgCounter();
+    showToast('Your Stride journey starts now');
+  }, 500);
+}
+
+function skipOnboarding() {
+  finishOnboarding();
+}
+
+function showOnboardingToast(msg) {
+  var t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.1);color:white;padding:10px 18px;border-radius:12px;font-size:13px;font-weight:500;z-index:1000;border:1px solid rgba(255,255,255,0.2);backdrop-filter:blur(10px);white-space:nowrap;';
+  document.getElementById('onboarding').appendChild(t);
+  setTimeout(function() { t.remove(); }, 2500);
+}
+
+// ─── PRO SUBSCRIPTION SYSTEM ───
+var proState = {
+  isPro: false,
+  freeMessages: 5,
+  usedMessages: 0,
+  maxFree: 5
+};
+
+function updateMsgCounter() {
+  var remaining = proState.maxFree - proState.usedMessages;
+  var pct = (remaining / proState.maxFree) * 100;
+  var wrap = document.getElementById('msg-counter-wrap');
+  var text = document.getElementById('msg-counter-text');
+  var bar = document.getElementById('msg-bar');
+  var badge = wrap ? wrap.querySelector('.pro-badge') : null;
+
+  if (proState.isPro) {
+    if (wrap) wrap.style.display = 'none';
+    return;
+  }
+
+  if (text) {
+    if (remaining <= 0) {
+      text.textContent = 'No messages left — upgrade to Pro';
+      text.style.color = 'var(--red)';
+    } else {
+      text.textContent = remaining + ' free message' + (remaining !== 1 ? 's' : '') + ' remaining this month';
+      text.style.color = remaining <= 2 ? 'var(--red)' : 'var(--gold)';
+    }
+  }
+  if (bar) bar.style.width = Math.max(0, pct) + '%';
+  if (badge) {
+    badge.textContent = 'FREE';
+    badge.style.background = remaining <= 0 ? 'var(--red)' : 'linear-gradient(135deg,#c9922a,#f0c060)';
+  }
+}
+
+function checkProAccess() {
+  if (proState.isPro) return true;
+  if (proState.usedMessages >= proState.maxFree) {
+    openPaywall();
+    return false;
+  }
+  proState.usedMessages++;
+  updateMsgCounter();
+  return true;
+}
+
+function openPaywall() {
+  document.getElementById('paywallModal').classList.add('open');
+}
+function closePaywall(e) {
+  if (!e || e.target === document.getElementById('paywallModal')) {
+    document.getElementById('paywallModal').classList.remove('open');
+  }
+}
+function subscribePro() {
+  proState.isPro = true;
+  document.getElementById('paywallModal').classList.remove('open');
+  updateMsgCounter();
+  // Update profile row
+  var statusVal = document.getElementById('pro-status-val');
+  if (statusVal) statusVal.innerHTML = '<span class="pro-badge">PRO</span>';
+  var proRow = document.getElementById('pro-profile-row');
+  if (proRow) proRow.onclick = function(){ showToast('You are on Stride Pro — thank you!'); };
+  // Update header badge
+  updateProBadge();
+  showToast('Welcome to Stride Pro! Unlimited coaching unlocked.');
+  setTimeout(function(){ showToast('2x Stride Coins activated on your next run!'); }, 2000);
+}
+function updateProBadge() {
+  var badge = document.getElementById('header-pro-badge');
+  if (proState.isPro && badge) badge.style.display = 'flex';
+}
+
+// ─── AGENT TABS ───
+function setAgentTab(tab) {
+  ['chat','coach','plan','injury'].forEach(function(t) {
+    var btn = document.getElementById('atab-' + t);
+    var view = document.getElementById('aview-' + t);
+    if (btn) btn.classList.toggle('active', t === tab);
+    if (view) view.style.display = t === tab ? (t === 'chat' ? 'flex' : 'block') : 'none';
+  });
+}
+
+// ─── AI SYSTEM PROMPTS ───
+var COACH_SYSTEM = 'You are Stride AI Coach, an expert running coach inside the Stride running app. ' +
+  'The user is Jose Fernandez, a Pro-tier runner in Santa Clarita, CA. ' +
+  'Stats: 312km total, 47 runs, best pace 4:52/km, 14-day streak. Goal: Sub 45min 10K. ' +
+  'Give specific, actionable advice. Be warm but concise — mobile app. Short paragraphs. No markdown headers. Max 250 words.';
+
+var INJURY_SYSTEM = 'You are Stride AI Coach, an expert running coach. Give helpful injury/recovery info for runners. ' +
+  'Always remind users to consult a medical professional for serious or persistent pain. ' +
+  'Be specific and practical. Short paragraphs. No markdown headers. Max 300 words.';
+
+// ─── COACH TAB ───
+function askCoach(topic, prompt) {
+  if (!checkProAccess()) return;
+  var responseEl = document.getElementById('coach-response');
+  var labelEl = document.getElementById('coach-response-label');
+  var textEl = document.getElementById('coach-response-text');
+  responseEl.style.display = 'block';
+  if (labelEl) labelEl.textContent = 'AI COACH';
+  textEl.innerHTML = '<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>';
+  setTimeout(function(){ responseEl.scrollIntoView({behavior:'smooth',block:'nearest'}); }, 100);
+  fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, system:COACH_SYSTEM, messages:[{role:'user',content:prompt}] })
+  }).then(function(r){ return r.json(); })
+    .then(function(d){ textEl.textContent = d.content&&d.content[0] ? d.content[0].text : 'Try again.'; })
+    .catch(function(){ textEl.textContent = 'Connection error. Try again.'; });
+}
+
+// ─── INJURY TAB ───
+function askInjury(topic, prompt) {
+  if (!checkProAccess()) return;
+  var textEl = document.getElementById('injury-response-text');
+  var responseEl = document.getElementById('injury-response');
+  responseEl.style.display = 'block';
+  textEl.innerHTML = '<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>';
+  setTimeout(function(){ responseEl.scrollIntoView({behavior:'smooth',block:'nearest'}); }, 100);
+  fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, system:INJURY_SYSTEM, messages:[{role:'user',content:prompt}] })
+  }).then(function(r){ return r.json(); })
+    .then(function(d){ textEl.textContent = d.content&&d.content[0] ? d.content[0].text : 'Try again.'; })
+    .catch(function(){ textEl.textContent = 'Connection error. Try again.'; });
+}
+
+// ─── TRAINING PLAN TAB ───
+var currentGoal = { race:'10K', label:'Sub 45min 10K' };
+function setGoal(el, race, label, dist) {
+  currentGoal = { race:race, label:label };
+  document.querySelectorAll('.goal-row').forEach(function(r){ r.classList.remove('active'); });
+  el.classList.add('active');
+  ['5k','10k','half','full'].forEach(function(k){ var c=document.getElementById('gc-'+k); if(c) c.style.opacity='0'; });
+  var key = dist==='5K'?'5k':dist==='10K'?'10k':dist==='21K'?'half':'full';
+  var chk = document.getElementById('gc-'+key); if(chk) chk.style.opacity='1';
+  var lbl = document.getElementById('plan-goal-label'); if(lbl) lbl.textContent=label;
+}
+function generatePlan() {
+  if (!checkProAccess()) return;
+  var planEl = document.getElementById('plan-response');
+  var textEl = document.getElementById('plan-response-text');
+  planEl.style.display = 'block';
+  textEl.innerHTML = '<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>';
+  setTimeout(function(){ planEl.scrollIntoView({behavior:'smooth',block:'nearest'}); }, 100);
+  var prompt = 'Create a detailed 8-week training plan for a runner: 312km base, best pace 4:52/km, 5-6 days/week. ' +
+    'Goal: ' + currentGoal.label + '. Week-by-week breakdown Mon-Sun. Include easy runs, tempo, intervals, long run, rest days. ' +
+    'Specify distance and pace for each session. Keep it practical.';
+  fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, system:COACH_SYSTEM, messages:[{role:'user',content:prompt}] })
+  }).then(function(r){ return r.json(); })
+    .then(function(d){ textEl.textContent = d.content&&d.content[0] ? d.content[0].text : 'Try again.'; })
+    .catch(function(){ textEl.textContent = 'Connection error. Try again.'; });
+}
+
+// ─── CHAT WITH REAL AI ───
+async function send() {
+  if (!checkProAccess()) return;
+  var f = document.getElementById('chatField');
+  var v = f.value.trim(); if (!v) return;
+  f.value = ''; f.style.height = 'auto';
+  addMsg(v, 'user');
+  var body = document.getElementById('chatBody');
+  var thinkDiv = document.createElement('div');
+  thinkDiv.className = 'chat-msg bot'; thinkDiv.id = 'thinking';
+  thinkDiv.innerHTML = '<div class="msg-from">Stride AI Coach</div><div class="bubble"><div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div></div>';
+  body.appendChild(thinkDiv); body.scrollTop = body.scrollHeight;
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, system:COACH_SYSTEM, messages:[{role:'user',content:v}] })
+    });
+    var data = await res.json();
+    document.getElementById('thinking')?.remove();
+    addMsg(data.content&&data.content[0] ? data.content[0].text : 'Try again.', 'bot');
+  } catch(e) {
+    document.getElementById('thinking')?.remove();
+    addMsg('Connection error — check your network and try again.', 'bot');
+  }
+}
+
+// ─── FONT SWITCHER ───
+var FONTS = {
+  playfair: {
+    display: "'DM Serif Display', serif",
+    body:    "'DM Sans', sans-serif",
+    mono:    "'JetBrains Mono', monospace"
+  },
+  barlow: {
+    display: "'Barlow', sans-serif",
+    body:    "'Barlow', sans-serif",
+    mono:    "'JetBrains Mono', monospace"
+  },
+  dm: {
+    display: "'DM Serif Display', serif",
+    body:    "'DM Sans', sans-serif",
+    mono:    "'JetBrains Mono', monospace"
+  }
+};
+
+var currentFont = 'playfair';
+
+function setFont(key) {
+  if (!FONTS[key]) return;
+  currentFont = key;
+  var f = FONTS[key];
+
+  // Apply to all display elements (wordmark, titles, numbers)
+  document.querySelectorAll('.wordmark, .splash-wordmark, .ph-name, .sheet-title, .lc-class, .rc-val, .lc-stat-v, .ph-val, .lb-val, .cs-total-num, .store-name, .tier-name').forEach(function(el) {
+    el.style.fontFamily = f.display;
+  });
+
+  // Apply body font to whole page
+  document.body.style.fontFamily = f.body;
+
+  // Update CSS variable for display font so dynamically created elements pick it up
+  document.documentElement.style.setProperty('--font-display', f.display);
+  document.documentElement.style.setProperty('--font-body', f.body);
+
+  // Update checkmarks
+  ['playfair','barlow','dm'].forEach(function(k) {
+    var opt = document.getElementById('font-opt-' + k);
+    var chk = document.getElementById('fc-' + k);
+    if (opt) opt.classList.toggle('active', k === key);
+    if (chk) chk.style.opacity = k === key ? '1' : '0';
+  });
+
+  showToast('Font changed to ' + (key === 'playfair' ? 'Playfair Display' : key === 'barlow' ? 'Barlow' : 'DM Serif'));
+}
+
+// ─── INIT — runs after all functions are defined ───
+window.addEventListener('DOMContentLoaded', function() {
+  updateHomeCard();
+  renderTierCards();
+  renderStore('all');
+  updateMsgCounter();
+});
+
+</script>
+</body>
+</html>
